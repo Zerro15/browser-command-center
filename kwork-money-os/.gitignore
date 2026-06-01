@@ -1,0 +1,16 @@
+
+# Kwork Money OS private/runtime data
+kwork-money-os/.venv/
+kwork-money-os/.browser-profile/
+kwork-money-os/.auth/
+kwork-money-os/data/private/
+kwork-money-os/reports/screenshots/
+kwork-money-os/reports/*.png
+*.cookies.json
+*.state.json
+
+# Common
+node_modules/
+.env
+.env.*
+.DS_Store

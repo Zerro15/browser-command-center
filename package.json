@@ -1,0 +1,25 @@
+{
+  "name": "browser-command-center",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local browser automation bridge with site-specific helper flows.",
+  "type": "commonjs",
+  "scripts": {
+    "doctor": "node scripts/doctor.js",
+    "bridge": "node browser-bridge.js",
+    "kwork": "node browser-kwork.js",
+    "flow": "node browser-flow.js",
+    "prompt": "node browser-prompt.js",
+    "watch:kwork": "node scripts/kwork-local-watch.js",
+    "money:scan": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_market_scan.py",
+    "money:competitors": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_competitor_scan.py",
+    "money:offer": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/generate_offer.py",
+    "money:banner": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/generate_banner_prompt.py",
+    "money:profile": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/generate_profile_draft.py",
+    "money:fill-draft": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/fill_kwork_draft.py",
+    "money:fill-profile": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/fill_profile_draft.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

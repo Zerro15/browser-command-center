@@ -1,0 +1,53 @@
+id: docker_project_launch
+name: Запуск проекта через Docker
+positioning: Разберу проект и запущу его в Docker с понятной инструкцией.
+client_result: Проект запускается одной командой или через docker compose.
+target_clients:
+  - владельцы кода
+  - начинающие стартапы
+  - разработчики без DevOps
+skills:
+  - Docker
+  - Docker Compose
+  - Linux
+  - env
+  - logs
+base_scope:
+  - анализ зависимостей
+  - Dockerfile или compose
+  - env.example
+  - инструкция запуска
+  - проверка логов
+not_included:
+  - переписывание проекта
+  - гарантия исправления всех багов приложения
+  - покупка сервера
+packages:
+  economy:
+    price_from: 4000
+    days: 3
+    includes:
+      - запуск одного сервиса
+      - базовый Dockerfile
+  standard:
+    price_from: 8000
+    days: 5
+    includes:
+      - docker compose
+      - база данных
+      - инструкция
+  business:
+    price_from: 15000
+    days: 8
+    includes:
+      - VPS
+      - автозапуск
+      - базовый мониторинг логов
+extras:
+  - деплой на VPS
+  - nginx
+  - SSL
+  - автозапуск
+risk_level: medium
+delivery_complexity: medium
+proof: Команда запуска, скрин логов, README.

@@ -1,0 +1,11 @@
+start
+new-page url="https://kwork.ru/new"
+wait ms=2500
+info
+list-fields
+fill hint="Название" text="Сделаю telegram-бот для заявок с понятным результатом"
+fill hint="Описание" text="Быстрый бот, который принимает заявки и отправляет их администратору.\n\nРезультат: Клиент получает рабочий канал приема заявок в Telegram.\n\nПеред стартом уточняю задачу, фиксирую базовый объем и показываю, что именно будет готово. Если задача выходит за рамки базового кворка, заранее предложу отдельный этап."
+fill hint="Краткое описание" text="Клиент получает рабочий канал приема заявок в Telegram."
+wait ms=1000
+screenshot
+# STOP: review the visible browser manually. Do not publish automatically.

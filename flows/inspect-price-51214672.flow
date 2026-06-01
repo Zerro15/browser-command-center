@@ -1,0 +1,5 @@
+new-page url="about:blank"
+open url="https://kwork.ru/edit?id=51214672"
+wait ms=3000
+info
+list-fields

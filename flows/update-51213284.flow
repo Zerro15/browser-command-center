@@ -1,0 +1,10 @@
+eval file="/home/zerro/projects/browser-command-center/scripts/profit-update-current-kwork.js"
+set-files selector="input[type=file][name='first-kwork-photo[]']" file="/home/zerro/projects/browser-command-center/covers-profit/51213284-openai-api.png"
+wait ms=1500
+eval file="/home/zerro/projects/browser-command-center/scripts/profit-update-current-kwork.js"
+screenshot
+eval file="/home/zerro/projects/browser-command-center/scripts/scroll-to-kwork-save.js"
+click selector=".js-save-kwork"
+wait ms=5000
+info
+screenshot

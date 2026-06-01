@@ -1,0 +1,5 @@
+eval file="/home/zerro/projects/browser-command-center/scripts/scroll-to-kwork-save.js"
+click selector=".js-save-kwork"
+wait ms=10000
+info
+screenshot

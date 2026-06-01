@@ -1,0 +1,118 @@
+kwork:
+  draft_url: "https://kwork.ru/new"
+  create_kwork_buttons:
+    - Создать кворк
+    - Новый кворк
+    - Добавить кворк
+  freelancer_entry:
+    - Фрилансеру
+    - Стать продавцом
+  safe_cookie_buttons:
+    - Окей
+    - Понятно
+    - Принять
+  blocked_buttons:
+    - Опубликовать
+    - На модерацию
+    - Отправить
+    - Удалить
+  title_hints:
+    - Название
+    - Заголовок
+    - title
+  description_hints:
+    - Описание
+    - description
+  short_description_hints:
+    - Краткое описание
+    - short
+  extras_hints:
+    - Дополнительные услуги
+    - Допы
+    - extras
+  faq_hints:
+    - FAQ
+    - Вопросы и ответы
+  buyer_questions_hints:
+    - Вопросы покупателю
+    - Что нужно от покупателя
+    - Требования
+  tags_hints:
+    - Теги
+    - tags
+  package_hints:
+    economy:
+      - Эконом
+      - Базовый
+    standard:
+      - Стандарт
+    business:
+      - Бизнес
+  file_inputs:
+    cover: "input[type=file][name='first-kwork-photo[]']"
+    generic: "input[type=file]"
+  fields:
+    title:
+      - "input[name*='title']"
+      - "textarea[name*='title']"
+    short_description:
+      - "textarea[name*='short']"
+      - "input[name*='short']"
+    full_description:
+      - "textarea[name*='description']"
+      - "[contenteditable='true']"
+    package_economy:
+      - "textarea[name*='economy']"
+      - "textarea[name*='basic']"
+    package_standard:
+      - "textarea[name*='standard']"
+    package_business:
+      - "textarea[name*='business']"
+    extras:
+      - "textarea[name*='extra']"
+    faq:
+      - "textarea[name*='faq']"
+    buyer_questions:
+      - "textarea[name*='question']"
+    tags:
+      - "input[name*='tag']"
+  publish_buttons:
+    - Опубликовать
+    - На модерацию
+    - Сохранить
+
+profile:
+  profile_url: "https://kwork.ru/settings"
+  positioning_hints:
+    - Позиционирование
+    - Специализация
+    - Заголовок
+  about_hints:
+    - О себе
+    - Описание
+    - about
+  services_hints:
+    - Услуги
+    - Чем занимаетесь
+  trust_hints:
+    - Почему
+    - Довер
+    - Опыт
+  tech_stack_hints:
+    - Навыки
+    - Стек
+    - skills
+  fields:
+    positioning:
+      - "input[name*='headline']"
+      - "input[name*='position']"
+    about:
+      - "textarea[name*='description']"
+      - "textarea[name*='about']"
+    services:
+      - "textarea[name*='services']"
+    trust:
+      - "textarea[name*='experience']"
+    tech_stack:
+      - "input[name*='skills']"
+      - "textarea[name*='skills']"

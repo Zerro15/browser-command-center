@@ -1,0 +1,5 @@
+start
+new-page url=https://example.com
+info
+list-buttons
+screenshot out=C:\Users\Bogdan\browser-bridge\flows\example-flow.png

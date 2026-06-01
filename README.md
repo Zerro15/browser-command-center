@@ -1,0 +1,68 @@
+# Browser Command Center
+
+Локальный CLI для управления Chrome через Chrome DevTools Protocol и запуска site-specific сценариев.
+
+Это уже слой ближе к цели "работать с сайтами по промпту":
+
+- запуск отдельного браузерного профиля;
+- открытие URL;
+- список вкладок;
+- клик по CSS-селектору;
+- клик по видимому тексту;
+- ввод текста в поле по CSS-селектору;
+- заполнение поля по подсказке `label`/`placeholder`/`name`;
+- список кнопок и список полей на странице;
+- нажатие клавиши;
+- выполнение JS на странице;
+- скриншот страницы.
+- сценарии из нескольких шагов через `browser-flow`.
+- prompt-like слой через `browser-prompt`.
+- site-specific слой для отдельных сайтов, сейчас есть модуль `kwork.ru` через `browser-kwork`.
+
+Быстрый старт:
+
+```powershell
+cd C:\Users\Bogdan\browser-bridge
+.\browser-bridge.cmd start
+.\browser-bridge.cmd new-page url=https://example.com
+.\browser-bridge.cmd info
+```
+
+Сценарии:
+
+```powershell
+cd C:\Users\Bogdan\browser-bridge
+.\browser-flow.cmd template
+.\browser-flow.cmd run file=C:\Users\Bogdan\browser-bridge\flows\example-flow.txt
+.\browser-prompt.cmd compile prompt="open kwork seller, list buttons"
+.\browser-prompt.cmd run prompt="open kwork seller, list buttons, screenshot"
+.\\browser-kwork.cmd open-seller
+.\\browser-kwork.cmd inspect
+```
+
+Примеры:
+
+```powershell
+.\browser-bridge.cmd start
+.\browser-bridge.cmd list
+.\browser-bridge.cmd new-page url=https://kwork.ru/seller
+.\browser-bridge.cmd info
+.\\browser-bridge.cmd list-buttons
+.\\browser-bridge.cmd list-fields
+.\\browser-bridge.cmd click-text text=Войти
+.\\browser-bridge.cmd fill hint=email text=mail@example.com
+.\browser-bridge.cmd click selector=.login-button
+.\browser-bridge.cmd type selector=input[name=email] text=mail@example.com clear=true
+.\browser-bridge.cmd press key=Enter
+.\browser-bridge.cmd eval js="(() => document.title)()"
+.\browser-bridge.cmd screenshot
+```
+
+Замечания:
+
+- Используется отдельный профиль `browser-bridge\chrome-profile`, чтобы не ломать основной браузер.
+- Для сложных сайтов селекторы иногда надо уточнять через `eval`.
+- Если сайт защищается от автоматизации, этот мост не гарантирует успех, но это уже намного лучше, чем кликать по координатам.
+- `browser-flow` нужен как переход к режиму "ты даёшь текстовую инструкцию, локальный runner делает шаги по сайту".
+- `browser-prompt` нужен как первый слой перевода короткого запроса в browser-flow, чтобы и я, и ты могли работать через один и тот же мост командами из терминала.
+- `browser-kwork` нужен для типовых сценариев на Kwork без ручной сборки шагов каждый раз; другие сайты можно добавлять отдельными модулями рядом с ним.

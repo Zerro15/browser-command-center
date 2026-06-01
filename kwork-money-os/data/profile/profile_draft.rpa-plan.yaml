@@ -1,0 +1,14 @@
+mode: fill-profile
+target_url: https://kwork.ru/settings
+profile: data/profile/profile_draft.json
+values:
+  positioning: sha256:9f7edd4794b0823d6b38bf577bc346c853e2415159f37457bf279e1df6a8dcf4
+    len:85
+  about: sha256:da4352aa3b38634e48b00cc9484cddf2002400f3d714f5a616f5a1549b3d0804 len:257
+  services: sha256:ceda685866a81d740cf59dafd25fb544d638411d80baef643231f51ff6fa8843
+    len:90
+  trust: sha256:1ee6ae0268be92dde5356e549c03972231e2966afb46246264c7d880051ea32e len:160
+  tech_stack: sha256:f31b6f718503c9d3ab92c0f8fdae86551778016a23bf5285cf3ae49e3c0eb40b
+    len:171
+  style_notes: sha256:5d6586f9c4b839c5baacc1095573324f3cd83d984a972f8310ec776721652fb5
+    len:85

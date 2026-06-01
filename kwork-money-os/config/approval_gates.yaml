@@ -1,0 +1,31 @@
+always_require_manual_approval:
+  - publish_kwork
+  - send_message
+  - edit_profile
+  - delete_anything
+  - save_live_kwork_changes
+  - upload_file_to_live_draft
+
+defaults:
+  dry_run: true
+  stop_before_publish: true
+  manual_login_only: true
+  no_password_argv: true
+  no_private_scraping: true
+
+browser_filler:
+  allowed_without_approval:
+    - open_browser
+    - open_draft
+    - inspect_fields
+    - generate_flow_preview
+    - screenshot
+  approval_flag: "--approve"
+  dangerous_publish_flag: "--danger-confirm-publish"
+  never_click:
+    - Опубликовать
+    - На модерацию
+    - Сохранить профиль
+    - Отправить сообщение
+    - Отправить
+    - Удалить

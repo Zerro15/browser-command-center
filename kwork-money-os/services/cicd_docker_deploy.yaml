@@ -1,0 +1,52 @@
+id: cicd_docker_deploy
+name: CI/CD и Docker деплой
+positioning: Настрою аккуратный pipeline сборки и деплоя через Docker.
+client_result: Код собирается и деплоится предсказуемо после изменений.
+target_clients:
+  - малые команды
+  - SaaS MVP
+  - владельцы GitHub/GitLab проектов
+skills:
+  - GitHub Actions
+  - GitLab CI
+  - Docker
+  - VPS
+  - Linux
+base_scope:
+  - анализ текущего запуска
+  - workflow сборки
+  - docker build
+  - deploy-команда
+  - инструкция rollback
+not_included:
+  - настройка сложного Kubernetes
+  - покупка инфраструктуры
+  - исправление всех тестов проекта
+packages:
+  economy:
+    price_from: 6000
+    days: 4
+    includes:
+      - один workflow
+      - сборка Docker image
+  standard:
+    price_from: 12000
+    days: 7
+    includes:
+      - deploy на VPS
+      - secrets
+      - инструкция
+  business:
+    price_from: 22000
+    days: 12
+    includes:
+      - staging/prod
+      - rollback
+      - healthcheck
+extras:
+  - staging окружение
+  - nginx/SSL
+  - healthcheck
+risk_level: medium
+delivery_complexity: high
+proof: Успешный workflow, ссылка на run, инструкция.

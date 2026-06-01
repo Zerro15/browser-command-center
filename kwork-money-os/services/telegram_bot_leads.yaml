@@ -1,0 +1,54 @@
+id: telegram_bot_leads
+name: Telegram-бот для заявок
+positioning: Быстрый бот, который принимает заявки и отправляет их администратору.
+client_result: Клиент получает рабочий канал приема заявок в Telegram.
+target_clients:
+  - малый бизнес
+  - эксперты
+  - локальные услуги
+  - онлайн-школы
+skills:
+  - Python
+  - Telegram Bot API
+  - aiogram
+  - базовая аналитика заявок
+base_scope:
+  - команда /start
+  - короткое меню или кнопки
+  - форма заявки
+  - отправка заявки администратору
+  - инструкция запуска
+not_included:
+  - сложная CRM
+  - платежи
+  - массовые рассылки
+  - обход ограничений Telegram
+packages:
+  economy:
+    price_from: 2500
+    days: 2
+    includes:
+      - простой сценарий заявки
+      - уведомление администратору
+  standard:
+    price_from: 5000
+    days: 4
+    includes:
+      - меню с кнопками
+      - несколько типов заявок
+      - запись в Google Sheets
+  business:
+    price_from: 9000
+    days: 7
+    includes:
+      - роли администратора
+      - расширенная логика
+      - деплой на VPS
+extras:
+  - деплой на VPS
+  - Google Sheets
+  - админ-команды
+  - доработка сценария
+risk_level: low
+delivery_complexity: medium
+proof: Рабочий бот, скриншоты диалога, инструкция запуска.

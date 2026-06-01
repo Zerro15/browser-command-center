@@ -1,0 +1,19 @@
+niches:
+  - telegram bot
+  - telegram бот заявки
+  - ai bot
+  - openai api
+  - google sheets telegram
+  - docker deploy
+  - ci cd docker
+  - n8n automation
+  - парсер python
+  - автоматизация браузера
+
+max_results_per_keyword: 8
+request_delay_seconds: 2.0
+respect:
+  public_data_only: true
+  no_captcha_bypass: true
+  no_aggressive_scraping: true
+  no_private_data: true

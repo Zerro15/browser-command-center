@@ -1,0 +1,6 @@
+new-page url="about:blank"
+open url="https://kwork.ru/settings"
+wait ms=2500
+info
+list-fields
+list-buttons

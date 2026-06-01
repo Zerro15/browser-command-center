@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-06-01T03:09:04.554147+00:00",
+  "source": "public Kwork search pages",
+  "policy": {
+    "public_data_only": true,
+    "no_captcha_bypass": true,
+    "no_aggressive_scraping": true,
+    "private_data_collected": false
+  },
+  "keywords": [
+    "telegram bot",
+    "docker deploy"
+  ],
+  "niche_scores": [
+    {
+      "keyword": "telegram bot",
+      "hot_score": 56.0,
+      "demand": 45,
+      "price": 25,
+      "skill_fit": 90,
+      "low_competition": 100,
+      "speed": 60,
+      "risk": 30,
+      "average_price_rub": null,
+      "results_seen": 0
+    },
+    {
+      "keyword": "docker deploy",
+      "hot_score": 53.5,
+      "demand": 45,
+      "price": 25,
+      "skill_fit": 80,
+      "low_competition": 100,
+      "speed": 60,
+      "risk": 30,
+      "average_price_rub": null,
+      "results_seen": 0
+    }
+  ],
+  "keyword_terms": [],
+  "repeated_offers": [],
+  "scans": [
+    {
+      "keyword": "telegram bot",
+      "url": "https://kwork.ru/search?query=telegram+bot",
+      "items": [],
+      "note": "offline mode: no request made"
+    },
+    {
+      "keyword": "docker deploy",
+      "url": "https://kwork.ru/search?query=docker+deploy",
+      "items": [],
+      "note": "offline mode: no request made"
+    }
+  ]
+}

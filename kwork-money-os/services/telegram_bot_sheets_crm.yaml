@@ -1,0 +1,52 @@
+id: telegram_bot_sheets_crm
+name: Telegram-бот с Google Sheets CRM
+positioning: Бот собирает заявки и складывает их в понятную таблицу.
+client_result: Клиент видит заявки в Telegram и Google Sheets без ручного копирования.
+target_clients:
+  - отделы продаж
+  - услуги
+  - мини-курсы
+  - менеджеры заявок
+skills:
+  - Python
+  - Telegram Bot API
+  - Google Sheets API
+  - webhook/integration
+base_scope:
+  - прием заявки
+  - валидация полей
+  - запись в Google Sheets
+  - уведомление менеджеру
+  - инструкция по доступам
+not_included:
+  - полноценная CRM
+  - платная реклама
+  - интеграции с закрытыми системами без API
+packages:
+  economy:
+    price_from: 3500
+    days: 3
+    includes:
+      - одна форма заявки
+      - запись в одну таблицу
+  standard:
+    price_from: 7000
+    days: 5
+    includes:
+      - несколько форм
+      - статусы заявок
+      - базовые фильтры
+  business:
+    price_from: 12000
+    days: 8
+    includes:
+      - роли
+      - расширенная структура таблиц
+      - деплой и автозапуск
+extras:
+  - дополнительная форма
+  - интеграция с webhook
+  - автозапуск на VPS
+risk_level: low
+delivery_complexity: medium
+proof: Таблица с тестовой заявкой, демо-диалог, инструкция.

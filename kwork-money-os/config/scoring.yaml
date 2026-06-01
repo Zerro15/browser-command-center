@@ -1,0 +1,30 @@
+demand_weight: 0.30
+price_weight: 0.20
+my_skill_fit_weight: 0.25
+competition_weight: 0.15
+delivery_complexity_weight: 0.10
+risk_weight: 0.20
+
+formula: "hot_score = demand*0.30 + price*0.20 + skill_fit*0.25 + low_competition*0.15 + speed*0.10 - risk*0.20"
+
+defaults:
+  demand: 45
+  price: 45
+  skill_fit: 70
+  low_competition: 45
+  speed: 60
+  risk: 30
+
+skill_fit:
+  telegram: 90
+  bot: 88
+  ai: 85
+  openai: 88
+  parser: 82
+  python: 86
+  docker: 80
+  ci: 76
+  cd: 76
+  n8n: 68
+  sheets: 78
+  crm: 74

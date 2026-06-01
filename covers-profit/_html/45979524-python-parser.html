@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 825px; height: 550px; margin: 0; overflow: hidden; background: #0B1020; }
+  body {
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    color: #fff;
+    background:
+      radial-gradient(circle at 78% 24%, #4DCCBD66 0, transparent 160px),
+      radial-gradient(circle at 18% 86%, #FFD16655 0, transparent 190px),
+      linear-gradient(135deg, #152238, #0B1020 78%);
+  }
+  .wrap {
+    position: relative;
+    width: 825px;
+    height: 550px;
+    padding: 42px 46px;
+  }
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(90deg, #000 0, transparent 78%);
+  }
+  .panel {
+    position: absolute;
+    right: 42px;
+    top: 54px;
+    width: 180px;
+    height: 270px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.08);
+    border-radius: 22px;
+    box-shadow: 0 28px 80px rgba(0,0,0,.28);
+  }
+  .panel::before, .panel::after {
+    content: "";
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    height: 14px;
+    border-radius: 99px;
+    background: #FFD166;
+  }
+  .panel::before { top: 46px; width: 118px; }
+  .panel::after { top: 88px; width: 86px; background: #4DCCBD; }
+  .node {
+    position: absolute;
+    right: 90px;
+    bottom: 66px;
+    width: 124px;
+    height: 124px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFD166, #4DCCBD);
+    box-shadow: 0 24px 70px #FFD16644;
+  }
+  .node::after {
+    content: "";
+    position: absolute;
+    inset: 32px;
+    border-radius: 50%;
+    background: rgba(11,16,32,.42);
+    border: 1px solid rgba(255,255,255,.22);
+  }
+  .kicker {
+    position: relative;
+    display: inline-block;
+    padding: 9px 13px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    color: #FFD166;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: .08em;
+  }
+  h1 {
+    position: relative;
+    width: 390px;
+    margin: 48px 0 0;
+    font-size: 58px;
+    line-height: .95;
+    letter-spacing: 0;
+    font-weight: 900;
+  }
+  .sub {
+    position: relative;
+    width: 380px;
+    margin-top: 24px;
+    font-size: 27px;
+    line-height: 1.18;
+    font-weight: 750;
+    color: rgba(255,255,255,.9);
+  }
+  .bar {
+    position: absolute;
+    left: 46px;
+    right: 46px;
+    bottom: 38px;
+    height: 12px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #FFD166, #4DCCBD, rgba(255,255,255,.3));
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid"></div>
+    <div class="panel"></div>
+    <div class="node"></div>
+    <div class="kicker">PYTHON AUTOMATION</div>
+    <h1>Парсер</h1>
+    <div class="sub">Данные, файлы, отчеты</div>
+    <div class="bar"></div>
+  </div>
+</body>
+</html>

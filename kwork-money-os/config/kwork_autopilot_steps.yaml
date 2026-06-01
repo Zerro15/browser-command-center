@@ -1,0 +1,27 @@
+open: https://kwork.ru
+require_login: true
+close_cookie_banner:
+  texts:
+    - Окей
+    - Понятно
+    - Принять
+click:
+  text:
+    - Фрилансеру
+    - Создать кворк
+    - Новый кворк
+choose_category:
+  category: Разработка и IT
+  subcategory_candidates:
+    - Чат-боты
+    - Скрипты
+    - Telegram боты
+    - Автоматизация
+fill_offer_fields: true
+upload_cover_if_exists: true
+screenshot: after-fill
+stop_before:
+  - Опубликовать
+  - На модерацию
+  - Отправить
+  - Удалить

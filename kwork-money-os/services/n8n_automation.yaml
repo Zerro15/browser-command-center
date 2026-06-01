@@ -1,0 +1,50 @@
+id: n8n_automation
+name: Автоматизация в n8n
+positioning: Соберу понятный workflow в n8n для заявок, таблиц и уведомлений.
+client_result: Повторяющиеся действия выполняются автоматически по webhook или расписанию.
+target_clients:
+  - малый бизнес
+  - маркетинг
+  - операционные команды
+skills:
+  - n8n
+  - webhooks
+  - Google Sheets
+  - Telegram
+  - API
+base_scope:
+  - один workflow
+  - webhook или расписание
+  - 2-3 узла интеграции
+  - тестовый прогон
+  - инструкция
+not_included:
+  - обход лимитов сервисов
+  - спам-рассылки
+  - сложные платные интеграции без API
+packages:
+  economy:
+    price_from: 4000
+    days: 3
+    includes:
+      - один простой workflow
+  standard:
+    price_from: 8000
+    days: 5
+    includes:
+      - несколько веток
+      - обработка ошибок
+  business:
+    price_from: 15000
+    days: 8
+    includes:
+      - деплой n8n
+      - credentials setup
+      - документация
+extras:
+  - дополнительный workflow
+  - деплой n8n
+  - логирование ошибок
+risk_level: medium
+delivery_complexity: medium
+proof: Скрин workflow, тестовый прогон, инструкция.

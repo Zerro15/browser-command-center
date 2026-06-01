@@ -1,0 +1,7 @@
+start
+new-page url=https://httpbin.org/forms/post
+list-fields
+fill hint="Customer name" text="Bogdan Test"
+fill hint="E-mail address" text="bogdan@example.com"
+info
+screenshot out=C:\Users\Bogdan\browser-bridge\flows\form-flow.png
