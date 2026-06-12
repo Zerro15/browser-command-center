@@ -1,11 +1,25 @@
 
 # Kwork Money OS private/runtime data
-kwork-money-os/.venv/
-kwork-money-os/.browser-profile/
-kwork-money-os/.auth/
-kwork-money-os/data/private/
-kwork-money-os/reports/screenshots/
-kwork-money-os/reports/*.png
+.venv/
+.browser-profile/
+.auth/
+data/private/
+data/replies/
+data/profile/profile_optimized.json
+data/offers/optimized/
+!data/offers/optimized/
+data/offers/optimized/*
+!data/offers/optimized/example_offer.json
+reports/screenshots/
+reports/*.png
+reports/*.md
+!reports/*.example.md
+reports/account_audit.md
+reports/kwork_offers_audit.md
+reports/account_money_plan.md
+reports/reply_drafts.md
+reports/autopilot_report.md
+reports/browser_fill_report.md
 *.cookies.json
 *.state.json
 

@@ -201,6 +201,108 @@ Even with `--approve`, the RPA bridge does not click:
 - `Опубликовать`;
 - `На модерацию`;
 - `Сохранить профиль`;
+- `Сохранить`;
 - `Отправить сообщение`;
 - `Отправить`;
-- `Удалить`.
+- `Удалить`;
+- `Принять заказ`;
+- `Отменить заказ`;
+- `Подтвердить действие`.
+
+## Kwork Account Optimizer + Reply Assistant
+
+All browser scripts support the same safe modes:
+
+```bash
+--dry-run    # no browser, writes a plan
+--preview    # opens visible browser, reads/screenshots only
+--run --approve --hold
+```
+
+The `--run --approve` mode may fill safe text fields, but final save/send/publish/delete/order buttons are still blocked and left for manual review.
+
+Account audit:
+
+```bash
+python3 scripts/kwork_account_audit.py --dry-run
+python3 scripts/kwork_account_audit.py --preview --hold
+```
+
+Profile optimization:
+
+```bash
+python3 scripts/generate_profile_optimization.py --run --approve
+python3 scripts/fill_profile_optimized.py --preview --hold
+python3 scripts/fill_profile_optimized.py --run --approve --hold
+```
+
+Kwork offer audit and local optimized drafts:
+
+```bash
+python3 scripts/optimize_existing_kworks.py --preview --hold
+python3 scripts/optimize_existing_kworks.py --run --approve
+```
+
+Reply assistant and safe reply filler:
+
+```bash
+python3 scripts/kwork_reply_assistant.py --preview --hold
+python3 scripts/fill_reply_draft.py --draft-id draft-xxxxxxxxxx --run --approve --hold
+```
+
+Money plan:
+
+```bash
+python3 scripts/account_money_plan.py --run --approve
+```
+
+New outputs:
+
+```text
+reports/account_audit.md
+reports/kwork_offers_audit.md
+reports/reply_drafts.md
+reports/account_money_plan.md
+data/profile/profile_optimized.json
+data/offers/optimized/
+data/replies/reply_drafts.json
+```
+
+## Безопасность перед git push
+
+This repository can be public, so generated account artifacts must stay local.
+Do not push:
+- `reports/account_audit.md`;
+- `reports/kwork_offers_audit.md`;
+- `reports/account_money_plan.md`;
+- `reports/reply_drafts.md`;
+- `reports/autopilot_report.md`;
+- `reports/browser_fill_report.md`;
+- `data/profile/profile_optimized.json`;
+- `data/offers/optimized/` generated files, except `example_offer.json`;
+- `data/replies/`;
+- `.browser-profile/`, `.auth/`, `.venv/`, screenshots, cookies, state files, and `.env`.
+
+Public-safe examples live in:
+- `reports/account_audit.example.md`;
+- `reports/account_money_plan.example.md`;
+- `reports/reply_drafts.example.md`;
+- `data/profile/profile_optimized.example.json`;
+- `data/offers/optimized/example_offer.json`.
+
+Before every push, run from the repository root:
+
+```bash
+git status --short --ignored
+npm run money:check-private
+```
+
+The local runtime profile is `kwork-money-os/.browser-profile/`.
+Screenshots are stored in `kwork-money-os/reports/screenshots/`.
+Private generated strategy and account reports are in `kwork-money-os/reports/`.
+
+Final Kwork actions are always manual:
+- Profile Filler may fill text fields, but it does not click `Сохранить профиль`.
+- Reply Assistant may prepare drafts, but it does not click `Отправить`.
+- Offer tools may prepare local drafts, but they do not click `Опубликовать`, `На модерацию`, `Сохранить`, or `Удалить`.
+- Orders are never accepted, cancelled, or confirmed automatically.

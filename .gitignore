@@ -23,3 +23,19 @@ kwork-money-os/reports/*.png
 *.state.json
 .*.state.json
 .*state.json
+
+# Kwork Money OS private runtime and generated outputs
+kwork-money-os/reports/*.md
+!kwork-money-os/reports/*.example.md
+kwork-money-os/reports/account_audit.md
+kwork-money-os/reports/kwork_offers_audit.md
+kwork-money-os/reports/account_money_plan.md
+kwork-money-os/reports/reply_drafts.md
+kwork-money-os/reports/autopilot_report.md
+kwork-money-os/reports/browser_fill_report.md
+kwork-money-os/data/profile/profile_optimized.json
+kwork-money-os/data/replies/
+kwork-money-os/data/offers/optimized/
+!kwork-money-os/data/offers/optimized/
+kwork-money-os/data/offers/optimized/*
+!kwork-money-os/data/offers/optimized/example_offer.json

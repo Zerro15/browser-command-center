@@ -40,9 +40,11 @@ PLAYWRIGHT_INSTALL_COMMAND = (
 )
 os.environ.setdefault("PW_TEST_SCREENSHOT_NO_FONTS_READY", "1")
 BLOCKED_BUTTON_RE = re.compile(
-    r"опубликовать|на модерацию|сохранить|отправить сообщение|отправить|удалить",
+    r"опубликовать|на модерацию|сохранить|submit|send|publish|delete|"
+    r"отправить сообщение|отправить|удалить|принять заказ|отменить заказ|подтвердить действие",
     re.I,
 )
+SENSITIVE_FIELD_RE = re.compile(r"cookie|token|csrf|password|passwd|secret|session", re.I)
 
 
 @dataclass
@@ -315,7 +317,7 @@ class KworkRpaBridge:
                         .filter(Boolean).join(' | ').replace(/\\s+/g, ' ').trim();
                     }"""
                 )
-                if label:
+                if label and not SENSITIVE_FIELD_RE.search(label):
                     seen.append(label[:180])
             except Exception:
                 continue
@@ -417,8 +419,6 @@ class KworkRpaBridge:
         if not value:
             return False
         lower_value = value.lower()
-        if "сохранить черновик" in lower_value or "сохранить как черновик" in lower_value:
-            return True
         for blocked in self.blocked_texts():
             if blocked.lower() in lower_value or lower_value in blocked.lower():
                 self.report.warn(f"blocked click skipped: {value}")

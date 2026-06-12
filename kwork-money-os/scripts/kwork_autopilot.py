@@ -53,12 +53,7 @@ def plan_values(steps: dict[str, Any], offer_path: Path, banner: Path | None, va
 def maybe_save_draft(bridge: KworkRpaBridge, approved: bool) -> None:
     if not approved:
         return
-    candidates = ["Сохранить черновик", "Сохранить как черновик"]
-    for text in candidates:
-        if bridge.click_text_safe(text):
-            bridge.report.action(f"safe draft save clicked: {text}")
-            return
-    bridge.report.warn("safe draft-save button not found; save skipped")
+    bridge.report.warn("auto-save draft is disabled by account optimizer safety rules; save manually in browser")
 
 
 def run_autopilot(args: argparse.Namespace) -> None:

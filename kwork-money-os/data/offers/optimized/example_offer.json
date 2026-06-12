@@ -1,0 +1,70 @@
+{
+  "source_id": "example",
+  "source_summary_redacted": "Synthetic example offer for public repository documentation.",
+  "title": "I will build a simple Telegram request bot",
+  "short_description": "A small Telegram bot that collects a request and sends it to an admin.",
+  "full_description": "This example offer uses synthetic data only. Replace it locally with generated private optimized offers. The scope is intentionally small: one request flow, one admin recipient, and a short launch note.",
+  "economy_package": {
+    "price_from": 2500,
+    "days": 2,
+    "includes": [
+      "one request form",
+      "admin notification",
+      "short launch note"
+    ]
+  },
+  "standard_package": {
+    "price_from": 5000,
+    "days": 4,
+    "includes": [
+      "buttons/menu",
+      "several request types",
+      "basic validation"
+    ]
+  },
+  "premium_package": {
+    "price_from": 9000,
+    "days": 7,
+    "includes": [
+      "Google Sheets logging",
+      "admin commands",
+      "deployment notes"
+    ]
+  },
+  "extras": [
+    "Google Sheets logging",
+    "deployment help",
+    "additional request flow"
+  ],
+  "faq": [
+    {
+      "q": "What do you need?",
+      "a": "A list of fields, admin Telegram ID, and expected message format."
+    }
+  ],
+  "buyer_questions": [
+    "What fields should the bot collect?",
+    "Who should receive the request?",
+    "Do you need Google Sheets logging?"
+  ],
+  "tags": [
+    "Python",
+    "Telegram Bot API",
+    "automation"
+  ],
+  "price_recommendations": {
+    "start": 2500,
+    "standard": 5000,
+    "premium": 9000,
+    "note": "Example values only."
+  },
+  "category_recommendations": [
+    "Programming",
+    "Chatbots",
+    "Automation"
+  ],
+  "risk_notes": [
+    "No spam or bypasses.",
+    "Final publication is manual."
+  ]
+}

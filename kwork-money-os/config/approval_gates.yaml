@@ -5,6 +5,9 @@ always_require_manual_approval:
   - delete_anything
   - save_live_kwork_changes
   - upload_file_to_live_draft
+  - accept_order
+  - cancel_order
+  - confirm_action
 
 defaults:
   dry_run: true
@@ -26,6 +29,14 @@ browser_filler:
     - Опубликовать
     - На модерацию
     - Сохранить профиль
+    - Сохранить
     - Отправить сообщение
     - Отправить
     - Удалить
+    - Принять заказ
+    - Отменить заказ
+    - Подтвердить действие
+    - submit
+    - send
+    - publish
+    - delete

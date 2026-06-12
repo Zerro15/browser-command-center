@@ -1,0 +1,38 @@
+{
+  "display_name_suggestion": "example-seller",
+  "headline": "Python, Telegram bots, and simple business automation",
+  "about": "I build small, practical automations: a Telegram request bot, a CSV cleanup script, a one-page parser, or a Docker launch setup. Scope is clarified before work starts.",
+  "skills": [
+    "Python",
+    "Telegram Bot API",
+    "Google Sheets",
+    "Docker",
+    "API/webhook"
+  ],
+  "short_pitch": "Small working automation with clear inputs, result, and handoff notes.",
+  "long_pitch": "This profile example is safe for a public repository. Replace it locally with account-specific copy generated from your private audit.",
+  "trust_blocks": [
+    "Clarifies scope before accepting work.",
+    "Keeps the first milestone small and testable.",
+    "Does not handle spam, bypasses, credential harvesting, or private scraping."
+  ],
+  "faq": [
+    {
+      "q": "What do you need to start?",
+      "a": "A short task description, sample input, and the expected output."
+    },
+    {
+      "q": "Do you send messages or publish automatically?",
+      "a": "No. Final actions are always reviewed and performed manually."
+    }
+  ],
+  "portfolio_ideas": [
+    "Demo Telegram request bot with synthetic data.",
+    "CSV cleanup before/after sample.",
+    "Docker compose example for a toy app."
+  ],
+  "buyer_friendly_description": "Send a short task description and I will suggest a small first step.",
+  "warnings": [
+    "Example only. Do not store real account audit, runtime profile data, or client messages in git."
+  ]
+}

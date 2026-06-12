@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Fail if private Kwork Money OS runtime/generated files are tracked or staged."""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+
+ALLOWLIST = {
+    "kwork-money-os/reports/account_audit.example.md",
+    "kwork-money-os/reports/account_money_plan.example.md",
+    "kwork-money-os/reports/reply_drafts.example.md",
+    "kwork-money-os/data/profile/profile_optimized.example.json",
+    "kwork-money-os/data/offers/optimized/example_offer.json",
+}
+
+
+@dataclass(frozen=True)
+class Rule:
+    label: str
+    needle: str
+
+    def matches(self, path: str) -> bool:
+        return self.needle in path
+
+
+FORBIDDEN_RULES = [
+    Rule("browser profile", "kwork-money-os/.browser-profile/"),
+    Rule("virtualenv", "kwork-money-os/.venv/"),
+    Rule("auth data", "kwork-money-os/.auth/"),
+    Rule("cookie file", "cookies"),
+    Rule("state file", "state"),
+    Rule("env file", ".env"),
+    Rule("screenshots", "kwork-money-os/reports/screenshots/"),
+    Rule("account audit report", "kwork-money-os/reports/account_audit.md"),
+    Rule("offers audit report", "kwork-money-os/reports/kwork_offers_audit.md"),
+    Rule("account money plan", "kwork-money-os/reports/account_money_plan.md"),
+    Rule("reply drafts", "kwork-money-os/reports/reply_drafts.md"),
+    Rule("autopilot report", "kwork-money-os/reports/autopilot_report.md"),
+    Rule("browser fill report", "kwork-money-os/reports/browser_fill_report.md"),
+    Rule("optimized profile", "kwork-money-os/data/profile/profile_optimized.json"),
+    Rule("optimized offers", "kwork-money-os/data/offers/optimized/"),
+    Rule("reply data", "kwork-money-os/data/replies/"),
+    Rule("private data", "kwork-money-os/data/private/"),
+]
+
+
+def run_git(args: list[str], repo_root: Path) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo_root,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return result.stdout.decode("utf-8", errors="replace")
+
+
+def repo_root() -> Path:
+    here = Path(__file__).resolve()
+    try:
+        output = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=here.parents[2],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        ).stdout.strip()
+        return Path(output)
+    except Exception as error:
+        raise SystemExit(f"Unable to locate git repository root: {error}") from error
+
+
+def split_z(output: bytes) -> list[str]:
+    return [item.decode("utf-8", errors="replace") for item in output.split(b"\0") if item]
+
+
+def git_paths(args: list[str], repo_root_path: Path) -> list[str]:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo_root_path,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return split_z(result.stdout)
+
+
+def staged_paths(repo_root_path: Path) -> list[str]:
+    # Deletions are safe here: they remove private files from the repository.
+    return git_paths(
+        ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMRT"],
+        repo_root_path,
+    )
+
+
+def tracked_paths(repo_root_path: Path) -> list[str]:
+    return git_paths(["ls-files", "-z"], repo_root_path)
+
+
+def is_forbidden(path: str) -> str | None:
+    normalized = path.replace("\\", "/")
+    if normalized in ALLOWLIST:
+        return None
+    for rule in FORBIDDEN_RULES:
+        if rule.matches(normalized):
+            return rule.label
+    return None
+
+
+def collect_violations(paths: list[str], source: str) -> list[tuple[str, str, str]]:
+    violations = []
+    for path in sorted(set(paths)):
+        reason = is_forbidden(path)
+        if reason:
+            violations.append((source, reason, path))
+    return violations
+
+
+def main() -> None:
+    root = repo_root()
+    violations = []
+    violations.extend(collect_violations(tracked_paths(root), "tracked",))
+    violations.extend(collect_violations(staged_paths(root), "staged",))
+
+    if not violations:
+        print("No private Kwork Money OS files are tracked or staged.")
+        return
+
+    print("Private Kwork Money OS files detected in git index:")
+    for source, reason, path in violations:
+        print(f"- [{source}] {path} ({reason})")
+    print("")
+    print("Fix: keep the file on disk but remove it from git with:")
+    print("  git rm --cached -- <path>")
+    sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
