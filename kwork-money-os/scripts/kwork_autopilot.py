@@ -79,23 +79,7 @@ def click_create_kwork_button(bridge: KworkRpaBridge) -> bool:
 
 
 def stop_if_phone_verification_required(bridge: KworkRpaBridge) -> bool:
-    if not bridge.available:
-        return False
-    current_url = bridge.page.url
-    if "new_phone_verify=1" in current_url:
-        bridge.report.current_url = current_url
-        bridge.report.warn("Kwork requires manual phone verification; stopped before phone/SMS steps")
-        bridge.wait_and_screenshot("phone-verification-required")
-        return True
-    try:
-        text = bridge.page.locator("body").inner_text(timeout=1000)
-    except Exception:
-        return False
-    if "Укажите новый номер" not in text and "кодом подтверждения" not in text:
-        return False
-    bridge.report.warn("Kwork requires manual phone verification before kwork creation; stopped before filling fields")
-    bridge.wait_and_screenshot("phone-verification-required")
-    return True
+    return bridge.detect_phone_verification_required("phone-verification-required")
 
 
 def run_autopilot(args: argparse.Namespace) -> None:

@@ -18,6 +18,7 @@
     "money:profile": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/generate_profile_draft.py",
     "money:fill-draft": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/fill_kwork_draft.py",
     "money:fill-profile": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/fill_profile_draft.py",
+    "money:pre-phone": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_pre_phone_setup.py",
     "money:check-private": "kwork-money-os/.venv/bin/python kwork-money-os/scripts/check_private_leaks.py"
   },
   "engines": {

@@ -29,15 +29,15 @@ offer: data/offers/first_money_offer.json
 banner: null
 values:
   title: sha256:82f2a70b14bda3478c49388266deb87f556aebb1601b5f25138a4ae00bc162fe len:58
-  short_description: sha256:4fb81c48218e112f579b4f51d246cf4364fa8a19f175536afc5f9d9c6fe5ec4b
-    len:123
-  full_description: sha256:9eee2c0cb8ab20be362a52f0964ec5ed740b4b65ff2c71586759a1340f9dab51
-    len:891
-  package_economy: sha256:8bd4e598d935269f8dc66b297773a16b91cc6a35505c199977f3c7435000dfbb
+  short_description: sha256:e4fa51856f7d4658fe62ad065ae75a36270b453c204c14b4121a6ebe15973f24
+    len:121
+  full_description: sha256:9b23bba83854825074b7f0128e26219742872ef0c4bf2db201506e43754e18ef
+    len:1118
+  package_economy: sha256:9b6e2f0fe951a5561f4bb96a94a8c6ea3b60164f8841b79441ae50def282e2a4
     len:164
-  package_standard: sha256:e4286983ba0fb69ab6ab1302930671e2307cbeaf33475ef79a07760453777fac
+  package_standard: sha256:722eaf1323a412448e8b5ed368a79e2f7c87926d1cb9bfc00c865c16f43c256b
     len:155
-  package_business: sha256:c8ad7ec22588fc57ca50ce50d81ce5f4f2dee0e21257c30b9a1faf9f3e3023f6
+  package_business: sha256:002cb35c7be8c00e5d4b365800ad7ed4ee07b4b4aabee501ea463aca24993b13
     len:140
   extras: sha256:533bb249dc3b601de33a689be234edcbd69ec3eb9b9b34f9cc39a989b12f7b03
     len:174

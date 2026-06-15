@@ -44,6 +44,11 @@ BLOCKED_BUTTON_RE = re.compile(
     r"отправить сообщение|отправить|удалить|принять заказ|отменить заказ|подтвердить действие",
     re.I,
 )
+PHONE_VERIFICATION_RE = re.compile(
+    r"new_phone_verify=1|укажите\s+новый\s+номер|кодом\s+подтверждения|"
+    r"подтверд(ите|ить)\s+номер|sms|смс|номер\s+телефона|phone\s+verification",
+    re.I,
+)
 SENSITIVE_FIELD_RE = re.compile(r"cookie|token|csrf|password|passwd|secret|session", re.I)
 
 
@@ -550,6 +555,27 @@ class KworkRpaBridge:
         if self.available:
             self.page.wait_for_timeout(1000)
         self.screenshot(name)
+
+    def detect_phone_verification_required(self, screenshot_name: str | None = None) -> bool:
+        if not self.available:
+            return False
+        current_url = self.page.url
+        self.report.current_url = current_url
+        if PHONE_VERIFICATION_RE.search(current_url):
+            self.report.warn("Kwork requires manual phone verification; stopped before phone/SMS steps")
+            if screenshot_name:
+                self.wait_and_screenshot(screenshot_name)
+            return True
+        try:
+            text = self.page.locator("body").inner_text(timeout=1000)
+        except Exception:
+            return False
+        if PHONE_VERIFICATION_RE.search(text):
+            self.report.warn("Kwork requires manual phone verification before continuing; stopped before phone/SMS steps")
+            if screenshot_name:
+                self.wait_and_screenshot(screenshot_name)
+            return True
+        return False
 
     def fill_text(self, field_name: str, value: Any, hints: list[str], selectors: list[str] | None = None, required: bool = False) -> bool:
         text = compact(value)
