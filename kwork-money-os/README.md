@@ -194,6 +194,9 @@ Always require manual approval before:
 - deleting anything;
 - saving live kwork changes;
 - uploading a banner or file to a live draft.
+- phone verification, SMS code entry, withdrawal settings, account switching, and moderation submission.
+
+If Kwork redirects to `https://kwork.ru/seller?new_phone_verify=1`, automation pauses. Phone numbers, SMS/calls, payout details, account switching, moderation, publication, and final confirmations stay manual-only.
 
 Passwords must never be passed through argv, logs, state files, JSON, or markdown.
 
@@ -306,3 +309,4 @@ Final Kwork actions are always manual:
 - Reply Assistant may prepare drafts, but it does not click `Отправить`.
 - Offer tools may prepare local drafts, but they do not click `Опубликовать`, `На модерацию`, `Сохранить`, or `Удалить`.
 - Orders are never accepted, cancelled, or confirmed automatically.
+- Phone/SMS verification, withdrawal details, account switching, publication, moderation, and delete/confirm flows are not automated.

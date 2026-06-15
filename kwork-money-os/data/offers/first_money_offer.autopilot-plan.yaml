@@ -1,0 +1,57 @@
+mode: create-kwork
+open: https://kwork.ru/manage_kworks
+require_login: true
+close_cookie_banner:
+  texts:
+  - Окей
+  - Понятно
+  - Принять
+click:
+  text:
+  - Фрилансеру
+  - Создать кворк
+  - Новый кворк
+choose_category:
+  category: Разработка и IT
+  subcategory_candidates:
+  - Чат-боты
+  - Telegram боты
+  - Боты
+  - Автоматизация
+  - Программы на заказ
+  - Скрипты
+  - Администрирование сервера
+  - Хостинг
+  - Компьютерная и IT помощь
+fill_offer_fields: true
+upload_cover_if_exists: false
+offer: data/offers/first_money_offer.json
+banner: null
+values:
+  title: sha256:82f2a70b14bda3478c49388266deb87f556aebb1601b5f25138a4ae00bc162fe len:58
+  short_description: sha256:4fb81c48218e112f579b4f51d246cf4364fa8a19f175536afc5f9d9c6fe5ec4b
+    len:123
+  full_description: sha256:9eee2c0cb8ab20be362a52f0964ec5ed740b4b65ff2c71586759a1340f9dab51
+    len:891
+  package_economy: sha256:8bd4e598d935269f8dc66b297773a16b91cc6a35505c199977f3c7435000dfbb
+    len:164
+  package_standard: sha256:e4286983ba0fb69ab6ab1302930671e2307cbeaf33475ef79a07760453777fac
+    len:155
+  package_business: sha256:c8ad7ec22588fc57ca50ce50d81ce5f4f2dee0e21257c30b9a1faf9f3e3023f6
+    len:140
+  extras: sha256:533bb249dc3b601de33a689be234edcbd69ec3eb9b9b34f9cc39a989b12f7b03
+    len:174
+  faq: sha256:a35da6bfea0d29f7df57bbd90744dfeddbaf92fbc06dadd57b398d62e6a2b095 len:530
+  buyer_questions: sha256:254e373037a915eeeb09a708e239bba6a6707d167a5be108620f8a203ca480d0
+    len:382
+  tags: sha256:bf098d393b389b686822d534940ecab886933463813957118868b64821735659 len:90
+stop_before:
+- Опубликовать
+- На модерацию
+- Сохранить
+- Сохранить профиль
+- Отправить
+- Отправить сообщение
+- Удалить
+- Принять заказ
+- Подтвердить действие

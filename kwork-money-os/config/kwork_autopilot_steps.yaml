@@ -1,4 +1,4 @@
-open: https://kwork.ru
+open: https://kwork.ru/manage_kworks
 require_login: true
 close_cookie_banner:
   texts:
@@ -14,14 +14,24 @@ choose_category:
   category: Разработка и IT
   subcategory_candidates:
     - Чат-боты
-    - Скрипты
     - Telegram боты
+    - Боты
     - Автоматизация
+    - Программы на заказ
+    - Скрипты
+    - Администрирование сервера
+    - Хостинг
+    - Компьютерная и IT помощь
 fill_offer_fields: true
 upload_cover_if_exists: true
 screenshot: after-fill
 stop_before:
   - Опубликовать
   - На модерацию
+  - Сохранить
+  - Сохранить профиль
   - Отправить
+  - Отправить сообщение
   - Удалить
+  - Принять заказ
+  - Подтвердить действие

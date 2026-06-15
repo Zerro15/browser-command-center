@@ -56,6 +56,48 @@ def maybe_save_draft(bridge: KworkRpaBridge, approved: bool) -> None:
     bridge.report.warn("auto-save draft is disabled by account optimizer safety rules; save manually in browser")
 
 
+def click_create_kwork_button(bridge: KworkRpaBridge) -> bool:
+    if not bridge.available:
+        return False
+    try:
+        bridge.page.wait_for_timeout(2500)
+        locator = bridge.page.locator(".js-create-kwork-btn").first
+        if locator.count() < 1:
+            return False
+        label = locator.inner_text(timeout=1000).strip() or "Создать кворк"
+        if not bridge.assert_no_blocked_click(label):
+            return False
+        locator.scroll_into_view_if_needed(timeout=1500)
+        locator.click(timeout=3000)
+        bridge.page.wait_for_timeout(2500)
+        bridge.report.current_url = bridge.page.url
+        bridge.report.action("clicked create-kwork button safely via .js-create-kwork-btn")
+        return True
+    except Exception as error:
+        bridge.report.warn(f"safe create-kwork button click failed: {error}")
+        return False
+
+
+def stop_if_phone_verification_required(bridge: KworkRpaBridge) -> bool:
+    if not bridge.available:
+        return False
+    current_url = bridge.page.url
+    if "new_phone_verify=1" in current_url:
+        bridge.report.current_url = current_url
+        bridge.report.warn("Kwork requires manual phone verification; stopped before phone/SMS steps")
+        bridge.wait_and_screenshot("phone-verification-required")
+        return True
+    try:
+        text = bridge.page.locator("body").inner_text(timeout=1000)
+    except Exception:
+        return False
+    if "Укажите новый номер" not in text and "кодом подтверждения" not in text:
+        return False
+    bridge.report.warn("Kwork requires manual phone verification before kwork creation; stopped before filling fields")
+    bridge.wait_and_screenshot("phone-verification-required")
+    return True
+
+
 def run_autopilot(args: argparse.Namespace) -> None:
     offer_path = Path(args.offer)
     offer = load_offer(offer_path)
@@ -121,8 +163,26 @@ def run_autopilot(args: argparse.Namespace) -> None:
                 if args.hold:
                     bridge.hold_open()
                 return
+        if "manage_kworks" in bridge.page.url:
+            click_create_kwork_button(bridge)
+            if stop_if_phone_verification_required(bridge):
+                report.next_safe_command = "manual phone verification in visible browser; automation will not request calls or enter phone data"
+                write_autopilot_report(report)
+                print(AUTOPILOT_REPORT_PATH)
+                if args.hold:
+                    bridge.hold_open()
+                return
         if DEFAULT_DRAFT_URL not in bridge.page.url:
             bridge.open(DEFAULT_DRAFT_URL)
+        if "manage_kworks" in bridge.page.url:
+            click_create_kwork_button(bridge)
+        if stop_if_phone_verification_required(bridge):
+            report.next_safe_command = "manual phone verification in visible browser; automation will not request calls or enter phone data"
+            write_autopilot_report(report)
+            print(AUTOPILOT_REPORT_PATH)
+            if args.hold:
+                bridge.hold_open()
+            return
         bridge.wait_and_screenshot("autopilot-create-mode")
 
         category_cfg = steps.get("choose_category") or {}

@@ -8,6 +8,11 @@ always_require_manual_approval:
   - accept_order
   - cancel_order
   - confirm_action
+  - phone_verification
+  - sms_code_entry
+  - withdrawal_settings
+  - account_switching
+  - submit_for_moderation
 
 defaults:
   dry_run: true
@@ -15,6 +20,10 @@ defaults:
   manual_login_only: true
   no_password_argv: true
   no_private_scraping: true
+  phone_verification_manual_only: true
+  sms_manual_only: true
+  withdrawal_manual_only: true
+  account_switching_manual_only: true
 
 browser_filler:
   allowed_without_approval:

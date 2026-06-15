@@ -6,12 +6,14 @@
 data/private/
 data/replies/
 data/profile/profile_optimized.json
+data/profile/assets/
 data/offers/optimized/
 !data/offers/optimized/
 data/offers/optimized/*
 !data/offers/optimized/example_offer.json
 reports/screenshots/
 reports/*.png
+reports/*.json
 reports/*.md
 !reports/*.example.md
 reports/account_audit.md

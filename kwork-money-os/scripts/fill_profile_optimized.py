@@ -39,64 +39,63 @@ def joined(value) -> str:
 
 
 def fill_optimized_fields(bridge: KworkRpaBridge, profile: dict) -> None:
+    profile_details = "\n\n".join(
+        part.strip()
+        for part in [
+            profile.get("about", ""),
+            "Что делаю:\n" + "\n".join(f"- {item}" for item in profile.get("skills", [])),
+            "Как работаю:\n" + joined(profile.get("trust_blocks", [])),
+            "Коротко для клиента:\n" + profile.get("buyer_friendly_description", ""),
+        ]
+        if part and part.strip()
+    )
     field_specs = [
-        (
-            "display_name_suggestion",
-            profile.get("display_name_suggestion", ""),
-            ["Имя", "Отображаемое имя", "display name", "name"],
-            ["input[name*='name']", "input[name*='username']"],
-        ),
         (
             "headline",
             profile.get("headline", ""),
             ["Специализация", "Заголовок", "Профессия", "headline", "position"],
-            ["input[name*='headline']", "input[name*='position']", "input[name*='profession']"],
+            ["textarea[name='profession']", "input[name='profession']", "input[name*='headline']", "input[name*='position']"],
         ),
         (
-            "about",
-            profile.get("about", ""),
-            ["О себе", "Описание", "about", "description"],
-            ["textarea[name*='description']", "textarea[name*='about']", "[contenteditable='true']"],
-        ),
-        (
-            "skills",
-            ", ".join(profile.get("skills", [])),
-            ["Навыки", "Стек", "skills"],
-            ["input[name*='skills']", "textarea[name*='skills']"],
-        ),
-        (
-            "short_pitch",
-            profile.get("short_pitch", ""),
-            ["Кратко", "Слоган", "short", "pitch"],
-            ["textarea[name*='short']", "input[name*='short']"],
-        ),
-        (
-            "long_pitch",
-            profile.get("long_pitch", ""),
-            ["Описание услуг", "Дополнительно", "long", "services"],
-            ["textarea[name*='services']", "textarea[name*='details']"],
-        ),
-        (
-            "trust_blocks",
-            joined(profile.get("trust_blocks", [])),
-            ["Опыт", "Почему", "Довер", "trust"],
-            ["textarea[name*='experience']", "textarea[name*='trust']"],
-        ),
-        (
-            "faq",
-            joined(profile.get("faq", [])),
-            ["FAQ", "Вопросы", "Ответы"],
-            ["textarea[name*='faq']"],
-        ),
-        (
-            "buyer_friendly_description",
-            profile.get("buyer_friendly_description", ""),
-            ["Покупателю", "Клиенту", "buyer"],
-            ["textarea[name*='buyer']", "textarea[name*='client']"],
+            "profile_details",
+            profile_details,
+            ["Навыки, опыт, специализация", "О себе", "Описание", "details"],
+            ["textarea[name='details']", "textarea[name*='description']", "textarea[name*='about']"],
         ),
     ]
     for name, value, hints, selectors in field_specs:
         bridge.fill_text(name, value, hints, selectors)
+
+
+def open_profile_settings_tab(bridge: KworkRpaBridge) -> bool:
+    if not bridge.available:
+        return False
+    try:
+        target = bridge.page.evaluate(
+            """() => {
+              const isVisible = (el) => {
+                const rect = el.getBoundingClientRect();
+                const style = getComputedStyle(el);
+                return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+              };
+              const tabs = Array.from(document.querySelectorAll('.k-tabs__item'))
+                .filter(isVisible)
+                .filter((el) => (el.innerText || '').replace(/\\s+/g, ' ').trim() === 'Профиль');
+              if (tabs.length !== 1) return {count: tabs.length};
+              tabs[0].setAttribute('data-kwork-profile-tab', 'true');
+              return {count: 1};
+            }"""
+        )
+        if int(target.get("count") or 0) != 1:
+            bridge.report.warn(f"profile settings tab not uniquely found: {target.get('count')}")
+            return False
+        bridge.page.locator("[data-kwork-profile-tab='true']").click(timeout=2000)
+        bridge.page.wait_for_timeout(1000)
+        bridge.report.action("opened settings profile tab safely")
+        return True
+    except Exception as error:
+        bridge.report.warn(f"unable to open settings profile tab: {error}")
+        return False
 
 
 def run_filler(args: argparse.Namespace) -> None:
@@ -122,13 +121,14 @@ def run_filler(args: argparse.Namespace) -> None:
     report = RpaReport(mode=f"profile-optimized:{mode}", target_url=args.profile_url, title="Kwork Optimized Profile Fill Report")
     with KworkRpaBridge(report) as bridge:
         bridge.open(args.profile_url)
-        bridge.wait_and_screenshot("profile-optimized-before")
-        bridge.collect_fields()
         if not strict_login_gate(bridge, REPORT_PATH):
             if args.hold:
                 bridge.hold_open()
             print(REPORT_PATH)
             return
+        open_profile_settings_tab(bridge)
+        bridge.wait_and_screenshot("profile-optimized-before")
+        bridge.collect_fields()
         if mode == "run":
             fill_optimized_fields(bridge, profile)
             bridge.wait_and_screenshot("profile-optimized-after")

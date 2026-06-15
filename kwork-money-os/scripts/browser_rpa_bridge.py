@@ -333,6 +333,16 @@ class KworkRpaBridge:
             if "login" in url or "signin" in url:
                 self.report.login_detected = "false"
                 return False
+            protected_paths = (
+                "/settings",
+                "/manage_kworks",
+                "/manage_orders",
+                "/inbox",
+                "/portfolio",
+            )
+            if any(path in url for path in protected_paths):
+                self.report.login_detected = "true"
+                return True
             state = self.page.evaluate(
                 """() => {
                   const isVisible = (el) => {
@@ -341,7 +351,12 @@ class KworkRpaBridge:
                     return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
                   };
                   const visible = (selector) => Array.from(document.querySelectorAll(selector)).some(isVisible);
-                  if (visible('input[type="password"]')) return false;
+                  const text = document.body ? document.body.innerText : '';
+                  const hasPasswordField = visible('input[type="password"]');
+                  const looksLikeSettingsPasswordSection = /(Новый пароль|Аккаунт и безопасность|Настройки)/i.test(text);
+                  const looksLikeLoginForm = hasPasswordField && !looksLikeSettingsPasswordSection &&
+                    /(Войти|Вход|Регистрация|Зарегистрироваться|Email|E-mail|Логин)/i.test(text);
+                  if (looksLikeLoginForm) return false;
                   const loggedInSelectors = [
                     'a[href*="/logout"]',
                     'a[href*="/inbox"]',
@@ -350,7 +365,6 @@ class KworkRpaBridge:
                     'a[href*="/settings"]'
                   ];
                   if (loggedInSelectors.some(visible)) return true;
-                  const text = document.body ? document.body.innerText : '';
                   if (/(Войти|Регистрация|Зарегистрироваться)/i.test(text)) return false;
                   if (/(Сообщения|Заказы|Мои кворки|Баланс|Профиль)/i.test(text)) return true;
                   return null;

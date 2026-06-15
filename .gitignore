@@ -19,6 +19,7 @@ kwork-money-os/.auth/
 kwork-money-os/data/private/
 kwork-money-os/reports/screenshots/
 kwork-money-os/reports/*.png
+kwork-money-os/reports/*.json
 *.cookies.json
 *.state.json
 .*.state.json
@@ -34,6 +35,7 @@ kwork-money-os/reports/reply_drafts.md
 kwork-money-os/reports/autopilot_report.md
 kwork-money-os/reports/browser_fill_report.md
 kwork-money-os/data/profile/profile_optimized.json
+kwork-money-os/data/profile/assets/
 kwork-money-os/data/replies/
 kwork-money-os/data/offers/optimized/
 !kwork-money-os/data/offers/optimized/
