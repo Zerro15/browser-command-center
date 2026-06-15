@@ -264,12 +264,20 @@ python3 scripts/account_money_plan.py --run --approve
 Lead Radar, read-only project discovery and local proposal drafts:
 
 ```bash
-.venv/bin/python scripts/kwork_lead_radar.py --dry-run
-.venv/bin/python scripts/kwork_lead_radar.py --preview --hold
-.venv/bin/python scripts/kwork_lead_radar.py --run --approve --hold
+npm run money:lead-radar -- --dry-run
+npm run money:lead-radar -- --preview --hold
+npm run money:lead-radar -- --run --approve --hold
 ```
 
-Lead Radar opens Kwork with `.browser-profile`, checks `login_detected`, scans visible project cards by safe topics, scores them, and writes local drafts only. It never clicks `Предложить услугу`, never sends proposals or messages, never publishes kworks, and stops if phone verification is detected.
+`--dry-run` does not open a browser and can find `0` projects. It only validates local wiring and writes a local report.
+
+`--preview --hold` opens a visible Playwright Chromium window with the persistent profile `kwork-money-os/.browser-profile`, checks `login_detected`, and leaves the browser open for manual review.
+
+`--run --approve --hold` performs the read-only project collection, scoring, and local proposal draft generation. It writes local files only and still never submits anything.
+
+Lead Radar uses Playwright Chromium, not Yandex Browser. If you are logged in through Yandex Browser, that does not count for Playwright Chromium. If `login_detected` is false, run `npm run money:lead-radar -- --preview --hold`, log in manually in the opened Chromium window, and do not save passwords, cookies, SMS codes, or credentials to project files.
+
+Lead Radar scans visible project cards by safe topics, scores them, and writes local drafts only. It never clicks `Предложить услугу`, never sends proposals or messages, never publishes kworks, and stops if phone verification is detected.
 
 Lead Radar local outputs:
 

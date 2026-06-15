@@ -16,7 +16,7 @@ from urllib.parse import quote_plus
 
 from _common import DATA, REPORTS, ROOT, ensure_dir
 from account_optimizer_common import FINAL_ACTION_WORDS, PROJECTS_URL, redact_text
-from browser_rpa_bridge import KworkRpaBridge, RpaReport
+from browser_rpa_bridge import KworkRpaBridge, PROFILE_DIR, RpaReport
 
 
 EXPECTED_REPO_ROOT = Path("/home/zerro/projects/browser-command-center")
@@ -27,6 +27,13 @@ PROPOSALS_DIR = LEADS_DIR / "proposals"
 REPORT_PATH = REPORTS / "lead_radar_report.md"
 MAX_CARDS_PER_TOPIC = 8
 MAX_DETAIL_PAGES = 10
+BROWSER_ENGINE = "Playwright Chromium"
+BROWSER_PROFILE_PATH = str(PROFILE_DIR)
+LOGIN_GUIDANCE = (
+    "login_detected is not true in Playwright Chromium. Yandex Browser login does not count here. "
+    "Use `npm run money:lead-radar -- --preview --hold`, log in manually in the opened Chromium window, "
+    "do not save passwords to files, then rerun Lead Radar."
+)
 
 TOPICS = [
     "Telegram бот",
@@ -84,8 +91,12 @@ class LeadRecord:
 @dataclass
 class RadarStatus:
     mode: str
+    hold: bool = False
     project_root: str = ""
     git_commit: str = ""
+    browser_engine: str = BROWSER_ENGINE
+    browser_profile_path: str = BROWSER_PROFILE_PATH
+    mode_explanation: str = ""
     login_detected: str = "unknown"
     phone_verification_detected: bool = False
     topics_scanned: list[str] = field(default_factory=list)
@@ -129,6 +140,14 @@ def validate_root(status: RadarStatus) -> None:
 def require_run_approval(mode: str, approved: bool) -> None:
     if mode == "run" and not approved:
         raise SystemExit("Lead Radar --run requires --approve. It is still read-only and never sends proposals.")
+
+
+def explain_mode(mode: str) -> str:
+    if mode == "dry-run":
+        return "No browser opens; validates local wiring and may find 0 projects."
+    if mode == "preview":
+        return "Opens visible Playwright Chromium with .browser-profile, checks login, takes screenshots, and does not write lead data."
+    return "Read-only collection in visible Playwright Chromium with .browser-profile; writes local lead/proposal drafts and never sends anything."
 
 
 def search_url(topic: str) -> str:
@@ -439,7 +458,9 @@ def scan_projects(status: RadarStatus, mode: str) -> list[LeadRecord]:
                 bridge.hold_open()
             return []
         if login_state is not True:
-            status.warn("login_detected is not true; stopped before project scan")
+            status.warn(LOGIN_GUIDANCE)
+            report.next_safe_command = "npm run money:lead-radar -- --preview --hold"
+            print(LOGIN_GUIDANCE)
             status.screenshots.extend(report.screenshots)
             if getattr(status, "hold", False):
                 bridge.hold_open()
@@ -509,6 +530,9 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
         "## Status",
         f"- project_root: `{status.project_root}`",
         f"- git_commit: `{status.git_commit}`",
+        f"- browser_engine: `{status.browser_engine}`",
+        f"- browser_profile_path: `{status.browser_profile_path}`",
+        f"- mode_explanation: `{status.mode_explanation}`",
         f"- login_detected: `{status.login_detected}`",
         f"- phone_verification_detected: `{str(status.phone_verification_detected).lower()}`",
         f"- topics_scanned: `{len(status.topics_scanned)}`",
@@ -532,6 +556,8 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
         [
             "",
             "## Safety",
+            "- Lead Radar uses Playwright Chromium with the local `.browser-profile`; it does not use Yandex Browser.",
+            "- A Yandex Browser login is separate and does not count as `login_detected` for this tool.",
             "- Read-only scan only; proposal buttons and message/send controls are never clicked.",
             "- Draft replies are local files only and are not submitted to Kwork.",
             "- Phone/SMS/withdrawal/account switching/publish/moderation/final submit actions remain manual-only.",
@@ -565,12 +591,11 @@ def main() -> None:
     args = parse_args()
     mode = "dry-run" if args.dry_run else "preview" if args.preview else "run"
     require_run_approval(mode, args.approve)
-    status = RadarStatus(mode=mode)
-    setattr(status, "hold", bool(args.hold))
+    status = RadarStatus(mode=mode, hold=bool(args.hold), mode_explanation=explain_mode(mode))
     validate_root(status)
     leads = scan_projects(status, mode)
     status.leads_found = len(leads)
-    if mode != "dry-run":
+    if mode == "run":
         status.leads_saved, status.proposal_drafts_written = write_outputs(leads)
     else:
         ensure_dir(LEADS_DIR)
