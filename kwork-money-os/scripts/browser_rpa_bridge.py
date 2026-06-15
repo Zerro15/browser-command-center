@@ -256,8 +256,16 @@ class KworkRpaBridge:
     def hold_open(self) -> None:
         if not self.available:
             return
+        if not sys.stdin.isatty():
+            message = "hold requested, but stdin is not interactive; browser will close without waiting"
+            self.report.warn(message)
+            print(message)
+            return
         print("Браузер оставлен открытым для проверки. Нажмите Enter в терминале, чтобы закрыть.")
-        input()
+        try:
+            input()
+        except EOFError:
+            self.report.warn("hold input ended unexpectedly; browser will close without failing the run")
 
     def open(self, url: str) -> None:
         if not self.available:

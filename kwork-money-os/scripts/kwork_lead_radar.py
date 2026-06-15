@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -103,6 +104,13 @@ class RadarStatus:
     leads_found: int = 0
     leads_saved: int = 0
     proposal_drafts_written: int = 0
+    lead_radar_exit_code: int = 0
+    lead_radar_status: str = "success"
+    lead_radar_error_summary: str = "none"
+    lead_radar_stdout_tail: str = "n/a: direct script execution"
+    lead_radar_stderr_tail: str = "n/a: direct script execution"
+    used_cached_leads: str = "no"
+    fallback_to_offline_triage: str = "no"
     actions: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     screenshots: list[str] = field(default_factory=list)
@@ -535,6 +543,13 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
         f"- mode_explanation: `{status.mode_explanation}`",
         f"- login_detected: `{status.login_detected}`",
         f"- phone_verification_detected: `{str(status.phone_verification_detected).lower()}`",
+        f"- lead_radar_exit_code: `{status.lead_radar_exit_code}`",
+        f"- lead_radar_status: `{status.lead_radar_status}`",
+        f"- lead_radar_error_summary: `{status.lead_radar_error_summary}`",
+        f"- lead_radar_stdout_tail: `{status.lead_radar_stdout_tail}`",
+        f"- lead_radar_stderr_tail: `{status.lead_radar_stderr_tail}`",
+        f"- used_cached_leads: `{status.used_cached_leads}`",
+        f"- fallback_to_offline_triage: `{status.fallback_to_offline_triage}`",
         f"- topics_scanned: `{len(status.topics_scanned)}`",
         f"- leads_found: `{status.leads_found}`",
         f"- leads_saved_total: `{status.leads_saved}`",
@@ -576,6 +591,35 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
     REPORT_PATH.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
+def classify_radar_status(status: RadarStatus, leads: list[LeadRecord], mode: str) -> None:
+    status.lead_radar_exit_code = 0
+    status.used_cached_leads = "no"
+    status.fallback_to_offline_triage = "no"
+    if mode == "dry-run":
+        status.lead_radar_status = "success"
+        status.lead_radar_error_summary = "dry-run completed without opening a browser"
+    elif status.phone_verification_detected:
+        status.lead_radar_status = "soft_stop"
+        status.lead_radar_error_summary = "phone verification detected; browser scan stopped safely"
+    elif status.login_detected != "true":
+        status.lead_radar_status = "soft_stop"
+        status.lead_radar_error_summary = "login is required in Playwright Chromium"
+    elif not leads:
+        status.lead_radar_status = "soft_stop"
+        status.lead_radar_error_summary = "no leads found; handled as an expected empty scan"
+    else:
+        status.lead_radar_status = "success"
+        status.lead_radar_error_summary = "leads collected and report written"
+
+
+def mark_radar_failed(status: RadarStatus, error: BaseException) -> None:
+    status.lead_radar_exit_code = 1
+    status.lead_radar_status = "failed"
+    status.lead_radar_error_summary = f"{type(error).__name__}: {error}"
+    status.used_cached_leads = "no"
+    status.fallback_to_offline_triage = "no"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
@@ -590,20 +634,37 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     mode = "dry-run" if args.dry_run else "preview" if args.preview else "run"
-    require_run_approval(mode, args.approve)
     status = RadarStatus(mode=mode, hold=bool(args.hold), mode_explanation=explain_mode(mode))
-    validate_root(status)
-    leads = scan_projects(status, mode)
-    status.leads_found = len(leads)
-    if mode == "run":
-        status.leads_saved, status.proposal_drafts_written = write_outputs(leads)
-    else:
-        ensure_dir(LEADS_DIR)
-        ensure_dir(PROPOSALS_DIR)
-        status.leads_saved = sum(1 for _ in LEADS_JSONL.open("r", encoding="utf-8")) if LEADS_JSONL.exists() else 0
-        status.proposal_drafts_written = 0
-    write_report(status, leads)
-    print(REPORT_PATH)
+    leads: list[LeadRecord] = []
+    try:
+        require_run_approval(mode, args.approve)
+        validate_root(status)
+        leads = scan_projects(status, mode)
+        status.leads_found = len(leads)
+        if mode == "run" and leads:
+            status.leads_saved, status.proposal_drafts_written = write_outputs(leads)
+        elif mode == "run":
+            ensure_dir(LEADS_DIR)
+            ensure_dir(PROPOSALS_DIR)
+            status.leads_saved = sum(1 for _ in LEADS_JSONL.open("r", encoding="utf-8")) if LEADS_JSONL.exists() else 0
+            status.proposal_drafts_written = 0
+        else:
+            ensure_dir(LEADS_DIR)
+            ensure_dir(PROPOSALS_DIR)
+            status.leads_saved = sum(1 for _ in LEADS_JSONL.open("r", encoding="utf-8")) if LEADS_JSONL.exists() else 0
+            status.proposal_drafts_written = 0
+        classify_radar_status(status, leads, mode)
+        write_report(status, leads)
+        print(REPORT_PATH)
+    except Exception as error:
+        mark_radar_failed(status, error)
+        status.warn(status.lead_radar_error_summary)
+        try:
+            write_report(status, leads)
+        except Exception as report_error:
+            print(f"Unable to write Lead Radar failure report: {report_error}", file=sys.stderr)
+        print(status.lead_radar_error_summary, file=sys.stderr)
+        raise SystemExit(1) from error
 
 
 if __name__ == "__main__":

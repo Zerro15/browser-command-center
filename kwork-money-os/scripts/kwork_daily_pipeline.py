@@ -87,6 +87,13 @@ class PipelineStatus:
     leads_after_dedup: int = 0
     high_risk_filtered: int = 0
     safe_shortlist_count: int = 0
+    lead_radar_exit_code: int = 0
+    lead_radar_status: str = "not_run"
+    lead_radar_error_summary: str = "not_run"
+    lead_radar_stdout_tail: str = ""
+    lead_radar_stderr_tail: str = ""
+    used_cached_leads: str = "no"
+    fallback_to_offline_triage: str = "no"
     top_5: list[dict[str, str]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     commands: list[CommandResult] = field(default_factory=list)
@@ -146,6 +153,15 @@ def parse_int(value: str, default: int = 0) -> int:
     return int(match.group(0)) if match else default
 
 
+def one_line_tail(text: str, limit: int = 900) -> str:
+    if not text:
+        return "none"
+    clean = re.sub(r"\s+", " ", text).strip()
+    if len(clean) <= limit:
+        return clean
+    return "..." + clean[-limit:]
+
+
 def parse_triage_stdout(stdout: str) -> dict[str, int | list[dict[str, str]]]:
     values: dict[str, int | list[dict[str, str]]] = {
         "input_leads": 0,
@@ -185,12 +201,39 @@ def run_lead_radar(status: PipelineStatus) -> None:
         command.append("--hold")
     result = run_command(command, allow_failure=True)
     status.commands.append(result)
-    if not result.ok:
-        status.warnings.append("Lead Radar returned a non-zero exit code; continuing offline triage from saved leads if available.")
+    status.lead_radar_exit_code = result.returncode
+    status.lead_radar_stdout_tail = one_line_tail(result.stdout)
+    status.lead_radar_stderr_tail = one_line_tail(result.stderr)
 
     status.login_detected = read_report_field(LEAD_RADAR_REPORT, "login_detected", "unknown")
     status.phone_verification_detected = read_report_field(LEAD_RADAR_REPORT, "phone_verification_detected", "unknown")
     status.leads_found = parse_int(read_report_field(LEAD_RADAR_REPORT, "leads_found", "0"))
+    reported_status = read_report_field(LEAD_RADAR_REPORT, "lead_radar_status", "unknown")
+    reported_error = read_report_field(LEAD_RADAR_REPORT, "lead_radar_error_summary", "unknown")
+    if result.ok and reported_status in {"success", "soft_stop"}:
+        status.lead_radar_status = reported_status
+        status.lead_radar_error_summary = reported_error
+    elif result.ok:
+        status.lead_radar_status = "success"
+        status.lead_radar_error_summary = "Lead Radar exited 0 without explicit status in report"
+    else:
+        status.lead_radar_status = "failed"
+        status.lead_radar_error_summary = status.lead_radar_stderr_tail
+
+    if status.lead_radar_status == "success":
+        status.used_cached_leads = "no"
+        status.fallback_to_offline_triage = "no"
+    elif LEADS_JSONL.exists():
+        status.used_cached_leads = "yes"
+        status.fallback_to_offline_triage = "yes"
+        status.warnings.append(
+            f"Lead Radar {status.lead_radar_status}; continuing offline triage from cached leads."
+        )
+    else:
+        write_daily_report(status)
+        raise SystemExit(
+            f"Lead Radar {status.lead_radar_status} and cached leads are absent: {LEADS_JSONL}"
+        )
 
 
 def run_lead_triage(status: PipelineStatus) -> None:
@@ -227,6 +270,13 @@ def write_daily_report(status: PipelineStatus) -> None:
         f"- git_commit: `{status.git_commit}`",
         f"- login_detected: `{status.login_detected}`",
         f"- phone_verification_detected: `{status.phone_verification_detected}`",
+        f"- lead_radar_exit_code: `{status.lead_radar_exit_code}`",
+        f"- lead_radar_status: `{status.lead_radar_status}`",
+        f"- lead_radar_error_summary: `{status.lead_radar_error_summary}`",
+        f"- lead_radar_stdout_tail: `{status.lead_radar_stdout_tail}`",
+        f"- lead_radar_stderr_tail: `{status.lead_radar_stderr_tail}`",
+        f"- used_cached_leads: `{status.used_cached_leads}`",
+        f"- fallback_to_offline_triage: `{status.fallback_to_offline_triage}`",
         f"- leads_found: `{status.leads_found}`",
         f"- leads_after_dedup: `{status.leads_after_dedup}`",
         f"- high_risk_filtered: `{status.high_risk_filtered}`",
@@ -315,6 +365,13 @@ def main() -> None:
     else:
         status.login_detected = "not_checked_dry_run"
         status.phone_verification_detected = "not_checked_dry_run"
+        status.lead_radar_exit_code = 0
+        status.lead_radar_status = "soft_stop"
+        status.lead_radar_error_summary = "dry-run skipped Lead Radar by design"
+        status.lead_radar_stdout_tail = "none"
+        status.lead_radar_stderr_tail = "none"
+        status.used_cached_leads = "yes"
+        status.fallback_to_offline_triage = "yes"
         if not LEADS_JSONL.exists():
             raise SystemExit(f"Dry-run requires saved leads: {LEADS_JSONL}")
 
@@ -325,6 +382,11 @@ def main() -> None:
     print(f"mode={status.mode}")
     print(f"login_detected={status.login_detected}")
     print(f"phone_verification_detected={status.phone_verification_detected}")
+    print(f"lead_radar_exit_code={status.lead_radar_exit_code}")
+    print(f"lead_radar_status={status.lead_radar_status}")
+    print(f"lead_radar_error_summary={status.lead_radar_error_summary}")
+    print(f"used_cached_leads={status.used_cached_leads}")
+    print(f"fallback_to_offline_triage={status.fallback_to_offline_triage}")
     print(f"leads_found={status.leads_found}")
     print(f"leads_after_dedup={status.leads_after_dedup}")
     print(f"high_risk_filtered={status.high_risk_filtered}")
