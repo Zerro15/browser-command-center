@@ -4,6 +4,7 @@
 .browser-profile/
 .auth/
 data/private/
+data/leads/
 data/replies/
 data/profile/profile_optimized.json
 data/profile/assets/

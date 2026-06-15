@@ -18,6 +18,7 @@ It does not:
 - collect private data;
 - store passwords;
 - send messages automatically;
+- send proposals automatically;
 - publish automatically;
 - change the live profile without approval.
 - click publish, moderation, send, delete, or profile-save buttons.
@@ -30,13 +31,14 @@ Run commands from:
 cd /home/zerro/projects/browser-command-center/kwork-money-os
 ```
 
-Python dependencies used here are `requests` and `PyYAML`.
-For browser RPA, install Playwright and its Chromium browser in the local environment:
+The Python virtualenv lives inside Kwork Money OS, not at the repository root:
 
 ```bash
-python3 -m pip install playwright
-python3 -m playwright install chromium
+.venv/bin/python -m pip install requests PyYAML playwright
+.venv/bin/python -m playwright install chromium
 ```
+
+Use `.venv/bin/python scripts/...` from this directory for Python commands.
 
 ## Market Scan
 
@@ -259,6 +261,26 @@ Money plan:
 python3 scripts/account_money_plan.py --run --approve
 ```
 
+Lead Radar, read-only project discovery and local proposal drafts:
+
+```bash
+.venv/bin/python scripts/kwork_lead_radar.py --dry-run
+.venv/bin/python scripts/kwork_lead_radar.py --preview --hold
+.venv/bin/python scripts/kwork_lead_radar.py --run --approve --hold
+```
+
+Lead Radar opens Kwork with `.browser-profile`, checks `login_detected`, scans visible project cards by safe topics, scores them, and writes local drafts only. It never clicks `Предложить услугу`, never sends proposals or messages, never publishes kworks, and stops if phone verification is detected.
+
+Lead Radar local outputs:
+
+```text
+data/leads/kwork_leads.jsonl
+data/leads/proposals/
+reports/lead_radar_report.md
+```
+
+These files stay local and are ignored because project text, buyer names, and proposal drafts should not be pushed.
+
 New outputs:
 
 ```text
@@ -266,7 +288,9 @@ reports/account_audit.md
 reports/kwork_offers_audit.md
 reports/reply_drafts.md
 reports/account_money_plan.md
+reports/lead_radar_report.md
 data/profile/profile_optimized.json
+data/leads/
 data/offers/optimized/
 data/replies/reply_drafts.json
 ```
@@ -278,10 +302,12 @@ Do not push:
 - `reports/account_audit.md`;
 - `reports/kwork_offers_audit.md`;
 - `reports/account_money_plan.md`;
+- `reports/lead_radar_report.md`;
 - `reports/reply_drafts.md`;
 - `reports/autopilot_report.md`;
 - `reports/browser_fill_report.md`;
 - `data/profile/profile_optimized.json`;
+- `data/leads/`;
 - `data/offers/optimized/` generated files, except `example_offer.json`;
 - `data/replies/`;
 - `.browser-profile/`, `.auth/`, `.venv/`, screenshots, cookies, state files, and `.env`.
@@ -303,6 +329,7 @@ npm run money:check-private
 The local runtime profile is `kwork-money-os/.browser-profile/`.
 Screenshots are stored in `kwork-money-os/reports/screenshots/`.
 Private generated strategy and account reports are in `kwork-money-os/reports/`.
+Private generated leads and proposal drafts are in `kwork-money-os/data/leads/`.
 
 Final Kwork actions are always manual:
 - Profile Filler may fill text fields, but it does not click `Сохранить профиль`.
@@ -310,3 +337,4 @@ Final Kwork actions are always manual:
 - Offer tools may prepare local drafts, but they do not click `Опубликовать`, `На модерацию`, `Сохранить`, or `Удалить`.
 - Orders are never accepted, cancelled, or confirmed automatically.
 - Phone/SMS verification, withdrawal details, account switching, publication, moderation, and delete/confirm flows are not automated.
+- Lead Radar may prepare local proposal drafts, but it does not click `Предложить услугу`, `Отправить`, or any final proposal/message button.
