@@ -308,6 +308,26 @@ reports/top_5_proposals.md
 
 The `reports/top_5_proposals.md` file is copy-paste friendly, but proposals remain manual-only. Do not send anything before phone verification is completed manually, and never automate `Предложить услугу`, `Отправить`, messages, phone/SMS, withdrawal, publication, moderation, or order actions.
 
+Daily Lead Pipeline:
+
+```bash
+npm run money:daily-leads -- --dry-run
+npm run money:daily-leads -- --run --approve --hold
+.venv/bin/python scripts/kwork_daily_pipeline.py --dry-run
+.venv/bin/python scripts/kwork_daily_pipeline.py --run --approve --hold
+```
+
+`money:daily-leads` runs the full safe cycle. In `--dry-run`, it does not open a browser: it checks the saved `data/leads/kwork_leads.jsonl`, runs offline Lead Triage, and updates `reports/lead_shortlist.md`, `reports/top_5_proposals.md`, and `reports/daily_lead_pipeline_report.md`.
+
+In `--run --approve`, it first runs `money:lead-radar` behavior read-only through Playwright Chromium, then runs `money:lead-triage` offline. It does not send proposals, does not click `Предложить услугу`, and does not touch messages, phone/SMS, withdrawal, publication, moderation, or order actions. If phone verification appears, the pipeline records it and continues only with offline triage from already saved leads.
+
+Use the pieces separately when needed:
+- `money:lead-radar` collects leads read-only.
+- `money:lead-triage` chooses the best leads offline.
+- `money:daily-leads` runs the safe daily loop and prepares the top proposals report.
+
+All replies remain manual-only. Until phone verification is completed manually, do not send proposals or messages.
+
 New outputs:
 
 ```text
@@ -318,6 +338,7 @@ reports/account_money_plan.md
 reports/lead_radar_report.md
 reports/lead_shortlist.md
 reports/top_5_proposals.md
+reports/daily_lead_pipeline_report.md
 data/profile/profile_optimized.json
 data/leads/
 data/offers/optimized/
@@ -334,6 +355,7 @@ Do not push:
 - `reports/lead_radar_report.md`;
 - `reports/lead_shortlist.md`;
 - `reports/top_5_proposals.md`;
+- `reports/daily_lead_pipeline_report.md`;
 - `reports/reply_drafts.md`;
 - `reports/autopilot_report.md`;
 - `reports/browser_fill_report.md`;
