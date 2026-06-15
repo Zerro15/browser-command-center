@@ -289,6 +289,25 @@ reports/lead_radar_report.md
 
 These files stay local and are ignored because project text, buyer names, and proposal drafts should not be pushed.
 
+Lead Triage, offline shortlist from saved Lead Radar results:
+
+```bash
+npm run money:lead-triage
+.venv/bin/python scripts/kwork_lead_triage.py --input data/leads/kwork_leads.jsonl --top 10
+```
+
+Lead Triage does not open Kwork and does not use a browser. It reads the local `data/leads/kwork_leads.jsonl`, deduplicates projects, removes high-risk work such as captcha/bypass/spam/mass registration/payment/account-access requests, recalculates realistic first-account prices, and writes a local shortlist.
+
+Lead Triage local outputs:
+
+```text
+data/leads/shortlist/
+reports/lead_shortlist.md
+reports/top_5_proposals.md
+```
+
+The `reports/top_5_proposals.md` file is copy-paste friendly, but proposals remain manual-only. Do not send anything before phone verification is completed manually, and never automate `Предложить услугу`, `Отправить`, messages, phone/SMS, withdrawal, publication, moderation, or order actions.
+
 New outputs:
 
 ```text
@@ -297,6 +316,8 @@ reports/kwork_offers_audit.md
 reports/reply_drafts.md
 reports/account_money_plan.md
 reports/lead_radar_report.md
+reports/lead_shortlist.md
+reports/top_5_proposals.md
 data/profile/profile_optimized.json
 data/leads/
 data/offers/optimized/
@@ -311,6 +332,8 @@ Do not push:
 - `reports/kwork_offers_audit.md`;
 - `reports/account_money_plan.md`;
 - `reports/lead_radar_report.md`;
+- `reports/lead_shortlist.md`;
+- `reports/top_5_proposals.md`;
 - `reports/reply_drafts.md`;
 - `reports/autopilot_report.md`;
 - `reports/browser_fill_report.md`;

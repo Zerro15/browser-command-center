@@ -20,6 +20,7 @@
     "money:fill-profile": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/fill_profile_draft.py",
     "money:pre-phone": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_pre_phone_setup.py",
     "money:lead-radar": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_lead_radar.py",
+    "money:lead-triage": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_lead_triage.py --input kwork-money-os/data/leads/kwork_leads.jsonl --top 10",
     "money:check-private": "kwork-money-os/.venv/bin/python kwork-money-os/scripts/check_private_leaks.py"
   },
   "engines": {

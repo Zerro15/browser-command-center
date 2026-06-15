@@ -40,6 +40,8 @@ FORBIDDEN_RULES = [
     Rule("account money plan", "kwork-money-os/reports/account_money_plan.md"),
     Rule("reply drafts", "kwork-money-os/reports/reply_drafts.md"),
     Rule("lead radar report", "kwork-money-os/reports/lead_radar_report.md"),
+    Rule("lead shortlist report", "kwork-money-os/reports/lead_shortlist.md"),
+    Rule("top proposals report", "kwork-money-os/reports/top_5_proposals.md"),
     Rule("pre-phone setup report", "kwork-money-os/reports/pre_phone_setup_report.md"),
     Rule("autopilot report", "kwork-money-os/reports/autopilot_report.md"),
     Rule("browser fill report", "kwork-money-os/reports/browser_fill_report.md"),
