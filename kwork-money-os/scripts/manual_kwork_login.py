@@ -24,9 +24,11 @@ from browser_rpa_bridge import KWORK_HOME_URL, REPORT_PATH, SCREENSHOT_DIR, Kwor
 SWITCH_REPORT_PATH = REPORTS / "account_switch_report.md"
 KWORK_LOGIN_URL = "https://kwork.ru/login"
 MANUAL_LOGIN_MESSAGE = (
-    "ВНИМАНИЕ: войди вручную именно в аккаунт ZerroOne в открытом Chromium. "
-    "Не используй Яндекс.Браузер. Не входи в bogdanmashenin или 3va_Marz. "
-    "После входа вернись в терминал и нажми Enter."
+    "ВНИМАНИЕ: войди вручную именно в ZerroOne в открытом Chromium. "
+    "Не используй Яндекс.Браузер. "
+    "После входа открой страницу https://kwork.ru/user/ZerroOne, "
+    "потом вернись в терминал и нажми Enter. "
+    "Не входи в bogdanmashenin или 3va_Marz."
 )
 MANUAL_ONLY = [
     "Switch Kwork account manually in Playwright Chromium.",
@@ -250,7 +252,7 @@ def print_manual_login_banner(account: str) -> None:
 
 
 def wait_for_manual_switch(bridge: KworkRpaBridge, seconds: int, account: str) -> None:
-    if seconds <= 0 and sys.stdin.isatty():
+    if sys.stdin.isatty():
         print_manual_login_banner(account)
         bridge.hold_open()
         return
