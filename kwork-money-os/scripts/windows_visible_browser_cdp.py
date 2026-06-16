@@ -123,6 +123,13 @@ def choose_port(start: int) -> int:
     raise RuntimeError(f"No free localhost CDP port found from {start}")
 
 
+def existing_cdp_port(start: int) -> int | None:
+    for port in range(int(start), int(start) + 50):
+        if wait_cdp(port, timeout_seconds=1):
+            return port
+    return None
+
+
 def wait_cdp(port: int, timeout_seconds: int = 25) -> bool:
     deadline = time.monotonic() + timeout_seconds
     url = f"http://127.0.0.1:{port}/json/version"
@@ -292,6 +299,12 @@ def prepare_browser(report: CdpReport, url: str) -> bool:
         report.error_summary = "No Windows Chrome/Edge executable found"
         report.next_step = "Install Chrome or Edge, then rerun money:win-browser-test"
         return False
+    existing_port = existing_cdp_port(DEFAULT_PORT)
+    if existing_port:
+        report.remote_debugging_port = existing_port
+        report.browser_process_started = True
+        report.visible_window_expected = True
+        return True
     port = choose_port(DEFAULT_PORT)
     report.remote_debugging_port = port
     launch_windows_browser(report.browser_executable, report.user_data_dir, port, url)
