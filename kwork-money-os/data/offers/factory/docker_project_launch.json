@@ -1,0 +1,95 @@
+{
+  "title": "Запущу ваш Python/Node.js проект в Docker с инструкцией",
+  "category": "Разработка и IT",
+  "subcategory": "DevOps / Docker",
+  "short_description": "Упакую небольшой Python или Node.js проект в Docker, добавлю docker-compose, .env.example и понятную инструкцию запуска.",
+  "full_description": "Подготовлю базовый Docker-запуск для небольшого проекта: Dockerfile, docker-compose, пример переменных окружения и README с командами. Это не замена полноценному production DevOps и не настройка сложной инфраструктуры за минимальный бюджет, а аккуратная упаковка проекта для понятного запуска.",
+  "economy_package": {
+    "name": "Dockerfile + README",
+    "includes": [
+      "Dockerfile для одного сервиса",
+      ".env.example",
+      "команды build/run",
+      "короткая инструкция"
+    ]
+  },
+  "standard_package": {
+    "name": "Docker Compose",
+    "includes": [
+      "Dockerfile",
+      "docker-compose.yml",
+      ".env.example",
+      "команды logs/restart/rebuild",
+      "проверка локального запуска"
+    ]
+  },
+  "premium_package": {
+    "name": "Compose + handoff",
+    "includes": [
+      "несколько сервисов по согласованию",
+      "healthcheck или базовая проверка",
+      "client handoff README",
+      "чеклист запуска на VPS",
+      "финальный отчёт"
+    ]
+  },
+  "price_economy": 2500,
+  "price_standard": 5000,
+  "price_premium": 8500,
+  "delivery_days_economy": 2,
+  "delivery_days_standard": 4,
+  "delivery_days_premium": 6,
+  "faq": [
+    {
+      "q": "Это полноценный production DevOps?",
+      "a": "Нет. Базовый кворк про аккуратную Docker-упаковку и инструкцию. Production-настройки, мониторинг и CI/CD оцениваются отдельно."
+    },
+    {
+      "q": "Можно Node.js проект?",
+      "a": "Да, если есть понятная команда запуска и package.json."
+    }
+  ],
+  "buyer_questions": [
+    "Какой стек проекта: Python, Node.js или другое?",
+    "Какая команда запуска сейчас работает локально?",
+    "Какие переменные окружения нужны?",
+    "Нужна ли база данных или только один сервис?"
+  ],
+  "tags": [
+    "Docker",
+    "docker-compose",
+    "Python",
+    "Node.js",
+    "Linux",
+    "запуск проекта"
+  ],
+  "what_user_must_prepare": [
+    "Исходный код проекта или репозиторий.",
+    "Команду текущего запуска.",
+    "Список переменных окружения без реальных секретов в публичном виде.",
+    "Версию Python/Node.js.",
+    "Описание ожидаемой проверки запуска."
+  ],
+  "delivery_checklist": [
+    "Понять текущий запуск проекта.",
+    "Добавить Dockerfile.",
+    "Добавить docker-compose при выбранном пакете.",
+    "Подготовить .env.example.",
+    "Проверить build/run.",
+    "Передать README с командами."
+  ],
+  "risk_notes": [
+    "Не обещать production DevOps в economy-пакете.",
+    "Не коммитить реальные .env и credentials.",
+    "Сложные зависимости и серверные настройки оценивать отдельно."
+  ],
+  "forbidden_scope": [
+    "хранение секретов в Dockerfile",
+    "настройка выводов/платежей",
+    "обход блокировок",
+    "полный CI/CD без отдельной оценки",
+    "поддержка 24/7"
+  ],
+  "portfolio_case_link": "data/portfolio/case_03_docker_project_launch.md",
+  "recommended_for_new_account": true
+}

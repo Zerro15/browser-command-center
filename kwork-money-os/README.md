@@ -361,6 +361,24 @@ These are honest examples, starter templates, and demo projects. They must not b
 
 Portfolio upload to Kwork is manual-only. Do not automate portfolio upload, profile save, moderation, publication, proposal sending, phone/SMS verification, withdrawal setup, messages, or order actions.
 
+Kwork Offer Factory:
+
+```text
+data/offers/factory/
+reports/offer_factory_report.md
+```
+
+Offer Factory contains five public-safe Kwork drafts for `ZerroOne`:
+- Telegram bot for leads with Google Sheets;
+- Google Sheets automation;
+- Docker launch for a small Python/Node.js project;
+- basic Python parser without captcha or bypass;
+- simple AI assistant or chatbot for business.
+
+The JSON drafts include titles, descriptions, packages, prices, delivery times, FAQ, buyer questions, tags, delivery checklists, risk notes, forbidden scope, and portfolio links. They are prepared for manual publication after phone verification, but they are not published automatically.
+
+`reports/offer_factory_report.md` is a local-only report with recommended publishing order, risk, complexity, approximate margin, and readiness notes. Do not commit runtime reports. Publishing, moderation, profile save, `Опубликовать`, `На модерацию`, phone/SMS, withdrawal, proposals, and messages remain manual-only final actions.
+
 Kwork Operator Dashboard:
 
 ```bash
@@ -368,7 +386,7 @@ npm run money:dashboard
 .venv/bin/python scripts/kwork_operator_dashboard.py --build
 ```
 
-The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, and manual-only checklist into:
+The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, Offer Factory, and manual-only checklist into:
 
 ```text
 reports/operator_dashboard.md

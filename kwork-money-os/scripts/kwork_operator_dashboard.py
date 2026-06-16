@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
 import subprocess
 from dataclasses import dataclass
@@ -32,6 +33,15 @@ TEMPLATE_PATH = ROOT / "templates" / "yandex_direct_sheets_exporter"
 PORTFOLIO_DIR = DATA / "portfolio"
 PORTFOLIO_INDEX = PORTFOLIO_DIR / "portfolio_index.md"
 PORTFOLIO_CHECKLIST = PORTFOLIO_DIR / "portfolio_upload_checklist.md"
+OFFER_FACTORY_DIR = DATA / "offers" / "factory"
+OFFER_FACTORY_REPORT = REPORTS / "offer_factory_report.md"
+OFFER_FACTORY_ORDER = [
+    "telegram_leads_bot.json",
+    "google_sheets_automation.json",
+    "docker_project_launch.json",
+    "ai_assistant_basic.json",
+    "python_parser_basic.json",
+]
 
 MANUAL_ONLY = [
     "Phone/SMS verification is manual-only.",
@@ -58,6 +68,8 @@ class DashboardData:
     template_summary: str
     portfolio_cases: list[str]
     portfolio_checklist: list[str]
+    offer_factory: list[str]
+    recommended_first_offer: str
     git_commit: str
 
 
@@ -184,6 +196,32 @@ def parse_numbered_items(text: str, limit: int = 10) -> list[str]:
     return [match.group(1).strip() for match in re.finditer(r"^\d+\.\s+(.+)$", text, re.M)][:limit]
 
 
+def load_offer_factory() -> tuple[list[str], str]:
+    items: list[str] = []
+    recommended_first = ""
+    for filename in OFFER_FACTORY_ORDER:
+        path = OFFER_FACTORY_DIR / filename
+        if not path.exists():
+            continue
+        offer = json.loads(path.read_text(encoding="utf-8"))
+        title = offer.get("title", path.stem)
+        prices = (
+            f"{offer.get('price_economy', '?')}/"
+            f"{offer.get('price_standard', '?')}/"
+            f"{offer.get('price_premium', '?')} ₽"
+        )
+        days = (
+            f"{offer.get('delivery_days_economy', '?')}/"
+            f"{offer.get('delivery_days_standard', '?')}/"
+            f"{offer.get('delivery_days_premium', '?')} days"
+        )
+        recommended = "yes" if offer.get("recommended_for_new_account") else "review"
+        items.append(f"{title} (`{filename}`) - {prices}, {days}, new_account: {recommended}")
+        if not recommended_first:
+            recommended_first = title
+    return items, recommended_first
+
+
 def collect_data() -> DashboardData:
     git_commit = validate_root()
     daily_text = read_text(DAILY_REPORT)
@@ -193,6 +231,7 @@ def collect_data() -> DashboardData:
     template_readme = read_text(TEMPLATE_README)
     portfolio_index = read_text(PORTFOLIO_INDEX)
     portfolio_checklist = read_text(PORTFOLIO_CHECKLIST)
+    offer_factory, recommended_first_offer = load_offer_factory()
     proposal, price, deadline, questions = parse_proposal(proposal_text_raw)
     delivery_files = sorted(path.name for path in DELIVERY_KIT.glob("*") if path.is_file()) if DELIVERY_KIT.exists() else []
     return DashboardData(
@@ -209,6 +248,8 @@ def collect_data() -> DashboardData:
         template_summary=template_readme.split("## What It Does", 1)[0].strip(),
         portfolio_cases=parse_portfolio_cases(portfolio_index),
         portfolio_checklist=parse_numbered_items(portfolio_checklist, limit=8),
+        offer_factory=offer_factory,
+        recommended_first_offer=recommended_first_offer,
         git_commit=git_commit,
     )
 
@@ -232,6 +273,7 @@ def build_markdown(data: DashboardData) -> str:
         f"- safe_shortlist_count: `{value(data.daily, 'safe_shortlist_count')}`",
         f"- best_lead_of_day: {best_title}",
         f"- portfolio_pack_status: `ready ({len(data.portfolio_cases)} demo cases)`",
+        f"- offer_factory_status: `ready ({len(data.offer_factory)} offers)`",
         "",
         "## Best Lead",
         f"- title: {best_title}",
@@ -290,6 +332,16 @@ def build_markdown(data: DashboardData) -> str:
         "",
         "### Manual Upload Checklist",
         *(f"- {item}" for item in data.portfolio_checklist),
+        "",
+        "## Offer Factory",
+        f"- status: `ready ({len(data.offer_factory)} public-safe offers)`",
+        f"- path: `{OFFER_FACTORY_DIR.relative_to(ROOT)}`",
+        f"- report: `{OFFER_FACTORY_REPORT.relative_to(ROOT)}`",
+        f"- recommended_first_offer: {data.recommended_first_offer or 'unknown'}",
+        "- publication: manual-only after phone verification; do not automate final buttons.",
+        "",
+        "### Factory Offers",
+        *(f"- {item}" for item in data.offer_factory),
         "",
         "## Manual-Only Checklist",
         *(f"- {item}" for item in MANUAL_ONLY),
@@ -375,6 +427,7 @@ def write_dashboard() -> None:
     print(f"login_detected={value(data.daily, 'login_detected')}")
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")
+    print(f"offer_factory_count={len(data.offer_factory)}")
     print("sent=false")
 
 
