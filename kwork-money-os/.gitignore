@@ -5,6 +5,7 @@
 .auth/
 data/private/
 data/leads/
+data/delivery/best_lead_yandex_direct_sheets/
 data/replies/
 data/profile/profile_optimized.json
 data/profile/assets/

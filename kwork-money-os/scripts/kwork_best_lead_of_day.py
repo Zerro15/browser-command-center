@@ -178,12 +178,42 @@ def proposal_under_limit(text: str, limit: int = 2000) -> str:
     return text[: limit - 10].rstrip() + "\n..."
 
 
+def custom_best_proposal(item: TriagedLead) -> str:
+    lead = item.lead
+    text = f"{lead.title}\n{lead.project_text}".lower()
+    if "яндекс директ" in text and ("google" in text or "таблиц" in text):
+        return proposal_under_limit(
+            "\n".join(
+                [
+                    f"Здравствуйте, {lead.buyer_username}!" if lead.buyer_username else "Здравствуйте!",
+                    "",
+                    "Готов взять задачу по выгрузке статистики Яндекс Директа в Google Sheets за 6000 ₽, срок 3-5 дней.",
+                    "",
+                    "План:",
+                    "- уточню список кампаний, период и финальные колонки для двух вкладок: ключевые слова и кампании;",
+                    "- подключу Yandex Direct API и Google Sheets API через безопасные переменные окружения, без паролей в коде;",
+                    "- сделаю Python-скрипт для ручного запуска или запуска по расписанию;",
+                    "- выгружу метрики в таблицу, добавлю форматирование дат, процентов, расходов и итоговых строк;",
+                    "- передам README с настройкой .env, запуском и проверкой результата.",
+                    "",
+                    "Чтобы точно зафиксировать объём, уточните, пожалуйста:",
+                    "1. Доступ к Direct API уже есть, или нужно пройти шаги получения токена?",
+                    "2. Таблицу создавать с нуля или писать в уже существующий Spreadsheet ID?",
+                    "3. Нужна только ежедневная выгрузка или ещё обновление за выбранный период вручную?",
+                    "",
+                    "Если потребуется, начну с минимального рабочего варианта и отдельно отмечу ограничения API/квот.",
+                ]
+            )
+        )
+    return proposal_under_limit(item.proposal)
+
+
 def write_best_outputs(best: BestCandidate, git_commit: str) -> None:
     ensure_dir(BEST_REPORT.parent)
     ensure_dir(BEST_PROPOSAL.parent)
     item = best.item
     lead = item.lead
-    proposal = proposal_under_limit(item.proposal)
+    proposal = custom_best_proposal(item)
     risks = best.extra_risks or item.high_risk_reasons or item.lead.why_risky or ["no major risk keywords detected"]
     lines = [
         "# Best Lead of Day",
