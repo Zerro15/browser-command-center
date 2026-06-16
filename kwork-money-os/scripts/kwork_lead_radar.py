@@ -17,6 +17,7 @@ from urllib.parse import quote_plus
 
 from _common import DATA, REPORTS, ROOT, ensure_dir
 from account_optimizer_common import FINAL_ACTION_WORDS, PROJECTS_URL, redact_text
+from account_guard import apply_account_guard_to_report, evaluate_account_guard
 from browser_rpa_bridge import KworkRpaBridge, PROFILE_DIR, RpaReport
 
 
@@ -99,6 +100,12 @@ class RadarStatus:
     browser_profile_path: str = BROWSER_PROFILE_PATH
     mode_explanation: str = ""
     login_detected: str = "unknown"
+    detected_username: str = "unknown"
+    expected_username: str = "ZerroOne"
+    allowed_usernames: str = "ZerroOne, bogdanmashenin"
+    account_guard_status: str = "not_checked"
+    account_guard_action: str = "not_checked"
+    account_guard_message: str = ""
     phone_verification_detected: bool = False
     topics_scanned: list[str] = field(default_factory=list)
     leads_found: int = 0
@@ -474,6 +481,24 @@ def scan_projects(status: RadarStatus, mode: str) -> list[LeadRecord]:
                 bridge.hold_open()
             return []
 
+        guard = evaluate_account_guard(bridge.detect_public_username())
+        apply_account_guard_to_report(report, guard)
+        status.detected_username = guard.detected_username
+        status.expected_username = guard.expected_username
+        status.allowed_usernames = ", ".join(guard.allowed_usernames)
+        status.account_guard_status = guard.account_guard_status
+        status.account_guard_action = guard.account_guard_action
+        status.account_guard_message = guard.account_guard_message
+        if not guard.ok:
+            status.warn(guard.account_guard_message)
+            report.warn(guard.account_guard_message)
+            report.next_safe_command = "manual account switch in Playwright Chromium to ZerroOne, then rerun Lead Radar"
+            bridge.wait_and_screenshot("lead-radar-account-guard-stop")
+            status.screenshots.extend(report.screenshots)
+            if getattr(status, "hold", False):
+                bridge.hold_open()
+            return []
+
         for topic in TOPICS:
             status.topics_scanned.append(topic)
             bridge.open(search_url(topic))
@@ -542,6 +567,12 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
         f"- browser_profile_path: `{status.browser_profile_path}`",
         f"- mode_explanation: `{status.mode_explanation}`",
         f"- login_detected: `{status.login_detected}`",
+        f"- detected_username: `{status.detected_username}`",
+        f"- expected_username: `{status.expected_username}`",
+        f"- allowed_usernames: `{status.allowed_usernames}`",
+        f"- account_guard_status: `{status.account_guard_status}`",
+        f"- account_guard_action: `{status.account_guard_action}`",
+        f"- account_guard_message: `{status.account_guard_message or 'none'}`",
         f"- phone_verification_detected: `{str(status.phone_verification_detected).lower()}`",
         f"- lead_radar_exit_code: `{status.lead_radar_exit_code}`",
         f"- lead_radar_status: `{status.lead_radar_status}`",
@@ -604,6 +635,9 @@ def classify_radar_status(status: RadarStatus, leads: list[LeadRecord], mode: st
     elif status.login_detected != "true":
         status.lead_radar_status = "soft_stop"
         status.lead_radar_error_summary = "login is required in Playwright Chromium"
+    elif status.account_guard_status in {"mismatch", "unknown", "blocked"}:
+        status.lead_radar_status = "soft_stop"
+        status.lead_radar_error_summary = status.account_guard_message or "account guard stopped browser scan"
     elif not leads:
         status.lead_radar_status = "soft_stop"
         status.lead_radar_error_summary = "no leads found; handled as an expected empty scan"

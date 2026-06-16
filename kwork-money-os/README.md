@@ -214,6 +214,38 @@ Even with `--approve`, the RPA bridge does not click:
 - `Отменить заказ`;
 - `Подтвердить действие`.
 
+## Kwork Account Guard
+
+Target Kwork account for working flows is `ZerroOne`.
+
+The guard reads only public username signals from Playwright Chromium: the current `/user/<username>` URL and visible public profile links. It does not read email, phone, passwords, cookies, tokens, local storage, or session files.
+
+Config:
+
+```text
+config/kwork_account_guard.yaml
+```
+
+Default policy:
+- `expected_username`: `ZerroOne`;
+- `allowed_usernames`: `ZerroOne`, `bogdanmashenin`;
+- `bogdanmashenin` is known, but not the target account;
+- if detected username is `bogdanmashenin`, guard status is `mismatch` and action is `stop_for_confirmation`;
+- unknown username stops browser automation;
+- usernames outside `allowed_usernames` are blocked.
+
+When Account Guard is not `ok`, browser flows stop before profile fill, kwork draft fill, and Lead Radar browser scan. Daily dry-run and offline triage can still run because they do not act through a live Kwork account.
+
+Manual account switch helper:
+
+```bash
+.venv/bin/python scripts/manual_kwork_login.py --hold
+```
+
+It opens Playwright Chromium with `.browser-profile`, prints `detected_username`, leaves the browser open for manual switch to `ZerroOne`, then checks again after Enter. Do not save passwords to files, and do not automate account switching.
+
+Final actions remain manual-only always: profile save, publish, moderation, proposals, messages, order actions, withdrawal, phone/SMS, delete, and confirmations.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:
@@ -276,6 +308,8 @@ npm run money:lead-radar -- --run --approve --hold
 `--run --approve --hold` performs the read-only project collection, scoring, and local proposal draft generation. It writes local files only and still never submits anything.
 
 Lead Radar uses Playwright Chromium, not Yandex Browser. If you are logged in through Yandex Browser, that does not count for Playwright Chromium. If `login_detected` is false, run `npm run money:lead-radar -- --preview --hold`, log in manually in the opened Chromium window, and do not save passwords, cookies, SMS codes, or credentials to project files.
+
+Lead Radar also checks Kwork Account Guard. If Playwright Chromium is logged in as `bogdanmashenin` or any non-target account, it stops before scanning projects and writes `account_guard_status` to `reports/lead_radar_report.md`. Switch manually to `ZerroOne` in Chromium before running browser collection.
 
 Lead Radar scans visible project cards by safe topics, scores them, and writes local drafts only. It never clicks `Предложить услугу`, never sends proposals or messages, never publishes kworks, and stops if phone verification is detected.
 
@@ -413,6 +447,8 @@ npm run money:post-phone -- --preview --hold
 
 Post-Phone Readiness is a read-only Playwright Chromium check for the moment after the user manually links a phone on Kwork. It opens Kwork with the persistent `.browser-profile`, checks `login_detected`, public username, phone verification stop, seller/profile access, and create-kwork page access.
 
+It writes Account Guard fields into the report: `detected_username`, `expected_username`, `allowed_usernames`, `account_guard_status`, `account_guard_action`, and `account_guard_message`. If detected username is `bogdanmashenin`, `profile_ready_to_save_manually=false` and `kwork_draft_ready_to_continue=false` until the user manually switches Chromium to `ZerroOne`.
+
 It writes local-only reports:
 
 ```text
@@ -437,6 +473,8 @@ reports/operator_dashboard.html
 ```
 
 The dashboard is for manual work after phone verification. It does not open Kwork, send proposals, click `Предложить услугу`, publish, moderate, save profile, handle phone/SMS, or touch withdrawal/order actions. `reports/operator_dashboard.*` are ignored/local-only and must not be committed.
+
+The dashboard shows Kwork Account Guard status and warns: profile, kworks, and proposals should be prepared only for `ZerroOne`; before publication, verify manually that the active account is correct.
 
 New outputs:
 

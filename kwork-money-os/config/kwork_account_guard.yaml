@@ -1,0 +1,17 @@
+expected_username: ZerroOne
+allowed_usernames:
+  - ZerroOne
+  - bogdanmashenin
+require_confirmation_on_mismatch: true
+blocked_when_mismatch:
+  - publish
+  - send_message
+  - send_proposal
+  - save_profile
+  - accept_order
+  - withdrawal
+  - phone_change
+  - delete
+  - moderation_submit
+  - profile_fill
+  - kwork_draft_fill

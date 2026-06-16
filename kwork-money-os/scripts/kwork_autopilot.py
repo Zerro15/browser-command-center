@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from _common import CONFIG, DATA, ROOT, load_yaml, require_manual_approval
+from account_guard import apply_account_guard_to_report, evaluate_account_guard
 from browser_rpa_bridge import (
     AUTOPILOT_REPORT_PATH,
     DEFAULT_DRAFT_URL,
@@ -261,6 +262,18 @@ def run_autopilot(args: argparse.Namespace) -> None:
             report.warn("login_detected is not true; autopilot stopped before clicks/fill")
             bridge.collect_fields()
             bridge.wait_and_screenshot("autopilot-login-gate")
+            write_autopilot_report(report)
+            print(AUTOPILOT_REPORT_PATH)
+            if args.hold:
+                bridge.hold_open()
+            return
+
+        guard = evaluate_account_guard(bridge.detect_public_username())
+        apply_account_guard_to_report(report, guard)
+        if not guard.ok:
+            report.warn(guard.account_guard_message)
+            report.next_safe_command = "manual account switch in Playwright Chromium to ZerroOne, then rerun Kwork draft flow"
+            bridge.wait_and_screenshot("autopilot-account-guard-stop")
             write_autopilot_report(report)
             print(AUTOPILOT_REPORT_PATH)
             if args.hold:

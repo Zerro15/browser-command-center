@@ -16,6 +16,7 @@ from account_optimizer_common import (
     strict_login_gate,
 )
 from _common import DATA, REPORTS
+from account_guard import apply_account_guard_to_report, evaluate_account_guard
 from browser_rpa_bridge import KworkRpaBridge, RpaReport
 
 
@@ -122,6 +123,17 @@ def run_filler(args: argparse.Namespace) -> None:
     with KworkRpaBridge(report) as bridge:
         bridge.open(args.profile_url)
         if not strict_login_gate(bridge, REPORT_PATH):
+            if args.hold:
+                bridge.hold_open()
+            print(REPORT_PATH)
+            return
+        guard = evaluate_account_guard(bridge.detect_public_username())
+        apply_account_guard_to_report(report, guard)
+        if not guard.ok:
+            report.warn(guard.account_guard_message)
+            report.next_safe_command = "manual account switch in Playwright Chromium to ZerroOne, then rerun profile flow"
+            bridge.wait_and_screenshot("profile-optimized-account-guard-stop")
+            report.write(REPORT_PATH)
             if args.hold:
                 bridge.hold_open()
             print(REPORT_PATH)

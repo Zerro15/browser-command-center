@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from _common import DATA, REPORTS, ROOT, ensure_dir
+from account_guard import load_account_guard_config
 
 
 EXPECTED_REPO_ROOT = Path("/home/zerro/projects/browser-command-center")
@@ -298,6 +299,13 @@ def value(data: dict[str, str], key: str, default: str = "unknown") -> str:
 
 def build_markdown(data: DashboardData) -> str:
     best_title = value(data.best, "project_title")
+    guard_config = load_account_guard_config()
+    guard_detected = value(data.post_phone, "detected_username", value(data.daily, "detected_username", "not_checked"))
+    guard_expected = value(data.post_phone, "expected_username", value(data.daily, "expected_username", guard_config.expected_username))
+    guard_allowed = value(data.post_phone, "allowed_usernames", value(data.daily, "allowed_usernames", ", ".join(guard_config.allowed_usernames)))
+    guard_status = value(data.post_phone, "account_guard_status", value(data.daily, "account_guard_status", "not_checked"))
+    guard_action = value(data.post_phone, "account_guard_action", value(data.daily, "account_guard_action", "not_checked"))
+    guard_message = value(data.post_phone, "account_guard_message", value(data.daily, "account_guard_message", "not_checked"))
     lines = [
         "# Kwork Operator Dashboard",
         "",
@@ -306,6 +314,8 @@ def build_markdown(data: DashboardData) -> str:
         "",
         "## Current Status",
         f"- login_detected: `{value(data.daily, 'login_detected')}`",
+        f"- detected_username: `{guard_detected}`",
+        f"- account_guard_status: `{guard_status}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
@@ -315,10 +325,24 @@ def build_markdown(data: DashboardData) -> str:
         f"- offer_factory_status: `ready ({len(data.offer_factory)} offers)`",
         f"- order_executor_status: `{data.order_executor_status}`",
         "",
+        "## Kwork Account Guard",
+        f"- expected_username: `{guard_expected}`",
+        f"- detected_username: `{guard_detected}`",
+        f"- allowed_usernames: `{guard_allowed}`",
+        f"- account_guard_status: `{guard_status}`",
+        f"- account_guard_action: `{guard_action}`",
+        f"- account_guard_message: `{guard_message}`",
+        "- warning: Профиль, кворки и отклики готовить только для ZerroOne. Перед публикацией убедись, что работаешь в нужном аккаунте.",
+        "- if_mismatch: automation stops before profile fill, kwork draft fill, and browser lead scan; switch account manually in Playwright Chromium.",
+        "",
         "## Post-Phone Readiness",
         f"- report: `{POST_PHONE_REPORT.relative_to(ROOT)}`",
         f"- login_detected: `{value(data.post_phone, 'login_detected', 'not_checked')}`",
         f"- username: `{value(data.post_phone, 'username', 'not_checked')}`",
+        f"- detected_username: `{value(data.post_phone, 'detected_username', 'not_checked')}`",
+        f"- expected_username: `{value(data.post_phone, 'expected_username', guard_config.expected_username)}`",
+        f"- account_guard_status: `{value(data.post_phone, 'account_guard_status', 'not_checked')}`",
+        f"- account_guard_action: `{value(data.post_phone, 'account_guard_action', 'not_checked')}`",
         f"- phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- create_kwork_accessible: `{value(data.post_phone, 'create_kwork_accessible', 'not_checked')}`",
         f"- seller_profile_accessible: `{value(data.post_phone, 'seller_profile_accessible', 'not_checked')}`",
@@ -485,6 +509,8 @@ def write_dashboard() -> None:
     print(f"operator_dashboard_html={DASHBOARD_HTML}")
     print(f"best_lead={value(data.best, 'project_title')}")
     print(f"login_detected={value(data.daily, 'login_detected')}")
+    print(f"detected_username={value(data.post_phone, 'detected_username', value(data.daily, 'detected_username', 'not_checked'))}")
+    print(f"account_guard_status={value(data.post_phone, 'account_guard_status', value(data.daily, 'account_guard_status', 'not_checked'))}")
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
     print(f"post_phone_verification_detected={value(data.post_phone, 'phone_verification_detected', 'not_checked')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")

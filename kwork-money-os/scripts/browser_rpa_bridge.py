@@ -66,6 +66,12 @@ class RpaReport:
     browser_opened: bool = False
     current_url: str = ""
     login_detected: str = "unknown"
+    detected_username: str = "unknown"
+    expected_username: str = "unknown"
+    allowed_usernames: str = ""
+    account_guard_status: str = "not_checked"
+    account_guard_action: str = "not_checked"
+    account_guard_message: str = ""
     next_safe_command: str = ""
 
     def warn(self, message: str) -> None:
@@ -89,6 +95,12 @@ class RpaReport:
             f"browser_opened: `{str(self.browser_opened).lower()}`",
             f"current_url: `{self.current_url or 'unknown'}`",
             f"login_detected: `{self.login_detected}`",
+            f"detected_username: `{self.detected_username}`",
+            f"expected_username: `{self.expected_username}`",
+            f"allowed_usernames: `{self.allowed_usernames or 'unknown'}`",
+            f"account_guard_status: `{self.account_guard_status}`",
+            f"account_guard_action: `{self.account_guard_action}`",
+            f"account_guard_message: `{self.account_guard_message or 'none'}`",
             f"next_safe_command: `{self.next_safe_command or 'none'}`",
             f"Started at: `{self.started_at}`",
             "",
@@ -395,6 +407,69 @@ class KworkRpaBridge:
             self.report.warn(f"Unable to determine login state: {error}")
             self.report.login_detected = "unknown"
             return None
+
+    def detect_public_username(self) -> str:
+        """Detect only a public Kwork username from URL/profile links.
+
+        This helper deliberately avoids private browser state: no cookies,
+        tokens, storage, email fields, passwords, or session data are read.
+        """
+        if not self.available:
+            self.report.detected_username = "unknown"
+            return "unknown"
+        try:
+            from account_guard import normalize_username
+
+            data = self.page.evaluate(
+                """() => {
+                  const visible = (el) => {
+                    const rect = el.getBoundingClientRect();
+                    const style = getComputedStyle(el);
+                    return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+                  };
+                  const usernameFromHref = (href) => {
+                    try {
+                      const url = new URL(href, location.href);
+                      const match = url.pathname.match(/^\\/user\\/([^/?#]+)/);
+                      return match && match[1] ? decodeURIComponent(match[1]) : '';
+                    } catch (_) {
+                      return '';
+                    }
+                  };
+                  const collect = (selector) => Array.from(document.querySelectorAll(selector))
+                    .filter(visible)
+                    .map((link) => usernameFromHref(link.href || link.getAttribute('href') || ''))
+                    .filter(Boolean);
+                  const current = (location.pathname.match(/^\\/user\\/([^/?#]+)/) || [])[1] || '';
+                  const headerCandidates = collect([
+                    'header a[href*="/user/"]',
+                    '.header a[href*="/user/"]',
+                    '[class*="header"] a[href*="/user/"]',
+                    '[class*="top"] a[href*="/user/"]',
+                    '[class*="user-menu"] a[href*="/user/"]',
+                    '[class*="profile"] a[href*="/user/"]'
+                  ].join(','));
+                  const visibleCandidates = collect('a[href*="/user/"]');
+                  return {current, headerCandidates, visibleCandidates};
+                }"""
+            )
+        except Exception as error:
+            self.report.warn(f"Unable to detect public username: {error}")
+            self.report.detected_username = "unknown"
+            return "unknown"
+
+        candidates: list[str] = []
+        for key in ("headerCandidates", "visibleCandidates"):
+            for raw in data.get(key) or []:
+                username = normalize_username(raw)
+                if username != "unknown" and username not in candidates:
+                    candidates.append(username)
+        current = normalize_username(data.get("current"))
+        if current != "unknown" and current not in candidates:
+            candidates.append(current)
+        detected = candidates[0] if candidates else "unknown"
+        self.report.detected_username = detected
+        return detected
 
     def is_login_required(self) -> bool:
         return self.detect_login_state() is False

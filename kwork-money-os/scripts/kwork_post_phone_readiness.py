@@ -12,6 +12,7 @@ from pathlib import Path
 
 from _common import REPORTS, ROOT, ensure_dir
 from account_optimizer_common import PROFILE_SETTINGS_URL, SELLER_PROFILE_URL
+from account_guard import apply_account_guard_to_report, evaluate_account_guard
 from browser_rpa_bridge import (
     DEFAULT_DRAFT_URL,
     KWORK_HOME_URL,
@@ -54,11 +55,19 @@ class ReadinessStatus:
     git_commit: str = ""
     login_detected: str = "unknown"
     username: str = "unknown"
+    detected_username: str = "unknown"
+    expected_username: str = EXPECTED_USERNAME
+    allowed_usernames: str = ""
+    account_guard_status: str = "not_checked"
+    account_guard_action: str = "not_checked"
+    account_guard_message: str = ""
     phone_verification_detected: bool = False
     create_kwork_accessible: bool = False
     seller_profile_accessible: bool = False
     can_continue_profile_setup: bool = False
     can_continue_kwork_draft: bool = False
+    profile_ready_to_save_manually: bool = False
+    kwork_draft_ready_to_continue: bool = False
     screenshots: list[str] = field(default_factory=list)
     pages: list[PageCheck] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -85,31 +94,20 @@ def validate_root() -> str:
     return run_git(["rev-parse", "HEAD"])
 
 
-def detect_username(bridge: KworkRpaBridge) -> str:
-    if not bridge.available:
-        return "unknown"
-    try:
-        candidates = bridge.page.evaluate(
-            """() => {
-              const values = [];
-              for (const link of Array.from(document.querySelectorAll('a[href*="/user/"]'))) {
-                try {
-                  const url = new URL(link.href, location.href);
-                  const match = url.pathname.match(/^\\/user\\/([^/?#]+)/);
-                  if (match && match[1]) values.push(decodeURIComponent(match[1]));
-                } catch (_) {}
-              }
-              const current = location.pathname.match(/^\\/user\\/([^/?#]+)/);
-              if (current && current[1]) values.push(decodeURIComponent(current[1]));
-              return Array.from(new Set(values)).slice(0, 20);
-            }"""
-        )
-    except Exception:
-        candidates = []
-    for candidate in candidates:
-        if candidate == EXPECTED_USERNAME:
-            return candidate
-    return candidates[0] if candidates else "unknown"
+def apply_guard(status: ReadinessStatus, bridge: KworkRpaBridge) -> None:
+    result = evaluate_account_guard(bridge.detect_public_username())
+    apply_account_guard_to_report(bridge.report, result)
+    status.username = result.detected_username
+    status.detected_username = result.detected_username
+    status.expected_username = result.expected_username
+    status.allowed_usernames = ", ".join(result.allowed_usernames)
+    status.account_guard_status = result.account_guard_status
+    status.account_guard_action = result.account_guard_action
+    status.account_guard_message = result.account_guard_message
+    if not result.ok:
+        bridge.report.warn(result.account_guard_message)
+        status.warnings.append(result.account_guard_message)
+        bridge.wait_and_screenshot("post-phone-account-guard-stop")
 
 
 def page_has_kwork_form(bridge: KworkRpaBridge) -> bool:
@@ -173,11 +171,19 @@ def write_report(status: ReadinessStatus) -> None:
         f"- git_commit: `{status.git_commit}`",
         f"- login_detected: `{status.login_detected}`",
         f"- username: `{status.username}`",
+        f"- detected_username: `{status.detected_username}`",
+        f"- expected_username: `{status.expected_username}`",
+        f"- allowed_usernames: `{status.allowed_usernames or 'unknown'}`",
+        f"- account_guard_status: `{status.account_guard_status}`",
+        f"- account_guard_action: `{status.account_guard_action}`",
+        f"- account_guard_message: `{status.account_guard_message or 'none'}`",
         f"- phone_verification_detected: `{str(status.phone_verification_detected).lower()}`",
         f"- create_kwork_accessible: `{str(status.create_kwork_accessible).lower()}`",
         f"- seller_profile_accessible: `{str(status.seller_profile_accessible).lower()}`",
         f"- can_continue_profile_setup: `{str(status.can_continue_profile_setup).lower()}`",
         f"- can_continue_kwork_draft: `{str(status.can_continue_kwork_draft).lower()}`",
+        f"- profile_ready_to_save_manually: `{str(status.profile_ready_to_save_manually).lower()}`",
+        f"- kwork_draft_ready_to_continue: `{str(status.kwork_draft_ready_to_continue).lower()}`",
         f"- screenshots_path: `{SCREENSHOT_ROOT.relative_to(ROOT)}`",
         "",
         "## Pages Checked",
@@ -204,6 +210,7 @@ def write_report(status: ReadinessStatus) -> None:
             "",
             "## Safety",
             "- Read-only/preview check only.",
+            "- Account Guard stops profile/kwork/lead browser work unless detected_username matches expected_username.",
             "- No profile save, publish, moderation, send, order, phone/SMS, withdrawal, or delete actions were clicked.",
             "- Username detection uses public profile/navigation links only; email, password, cookies, tokens, and session state are not read into the report.",
         ]
@@ -227,18 +234,25 @@ def run_preview(hold: bool) -> ReadinessStatus:
             status.phone_verification_detected = status.phone_verification_detected or item.phone_verification_detected
             if name == "home":
                 status.login_detected = item.login_detected
-                status.username = detect_username(bridge)
+                apply_guard(status, bridge)
             elif status.login_detected != "true" and item.login_detected == "true":
                 status.login_detected = "true"
             if status.username == "unknown":
-                status.username = detect_username(bridge)
+                apply_guard(status, bridge)
         status.screenshots = list(report.screenshots)
         status.warnings = list(report.warnings)
         by_name = {item.name: item for item in status.pages}
         status.create_kwork_accessible = by_name.get("create_kwork", PageCheck("", "")).accessible
         status.seller_profile_accessible = by_name.get("seller_profile", PageCheck("", "")).accessible
-        status.can_continue_profile_setup = by_name.get("profile_settings", PageCheck("", "")).accessible and not status.phone_verification_detected
-        status.can_continue_kwork_draft = status.create_kwork_accessible and not status.phone_verification_detected
+        account_guard_ok = status.account_guard_status == "ok"
+        status.can_continue_profile_setup = (
+            by_name.get("profile_settings", PageCheck("", "")).accessible
+            and not status.phone_verification_detected
+            and account_guard_ok
+        )
+        status.can_continue_kwork_draft = status.create_kwork_accessible and not status.phone_verification_detected and account_guard_ok
+        status.profile_ready_to_save_manually = status.can_continue_profile_setup
+        status.kwork_draft_ready_to_continue = status.can_continue_kwork_draft
         write_report(status)
         report.write(REPORTS / "post_phone_readiness_bridge_report.md")
         if hold:
@@ -246,11 +260,17 @@ def run_preview(hold: bool) -> ReadinessStatus:
     print(REPORT_PATH)
     print(f"login_detected={status.login_detected}")
     print(f"username={status.username}")
+    print(f"detected_username={status.detected_username}")
+    print(f"expected_username={status.expected_username}")
+    print(f"account_guard_status={status.account_guard_status}")
+    print(f"account_guard_action={status.account_guard_action}")
     print(f"phone_verification_detected={str(status.phone_verification_detected).lower()}")
     print(f"create_kwork_accessible={str(status.create_kwork_accessible).lower()}")
     print(f"seller_profile_accessible={str(status.seller_profile_accessible).lower()}")
     print(f"can_continue_profile_setup={str(status.can_continue_profile_setup).lower()}")
     print(f"can_continue_kwork_draft={str(status.can_continue_kwork_draft).lower()}")
+    print(f"profile_ready_to_save_manually={str(status.profile_ready_to_save_manually).lower()}")
+    print(f"kwork_draft_ready_to_continue={str(status.kwork_draft_ready_to_continue).lower()}")
     return status
 
 
