@@ -2,6 +2,7 @@
 # Kwork Money OS private/runtime data
 .venv/
 .browser-profile-zerroone/
+.browser-profile-zerroone-wrong-*/
 .browser-profile/
 .auth/
 data/private/
@@ -17,6 +18,7 @@ data/offers/optimized/*
 data/orders/prepared/
 reports/screenshots/
 reports/*.png
+reports/*.txt
 reports/*.json
 reports/*.md
 reports/*.html

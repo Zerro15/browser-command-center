@@ -313,31 +313,44 @@ def build_markdown(data: DashboardData) -> str:
     best_title = value(data.best, "project_title")
     guard_config = load_account_guard_config()
     active_path, fallback_path = browser_profile_paths(guard_config)
-    guard_detected = first_real(
-        "not_checked",
-        value(data.account_switch, "detected_username_after", ""),
-        value(data.post_phone, "detected_username", ""),
-        value(data.daily, "detected_username", ""),
+    has_account_switch = bool(data.account_switch)
+    guard_detected = (
+        value(data.account_switch, "detected_username_after", "unknown")
+        if has_account_switch
+        else first_real(
+            "not_checked",
+            value(data.post_phone, "detected_username", ""),
+            value(data.daily, "detected_username", ""),
+        )
     )
     guard_expected = value(data.post_phone, "expected_username", value(data.daily, "expected_username", guard_config.expected_username))
     guard_allowed = value(data.post_phone, "allowed_usernames", value(data.daily, "allowed_usernames", ", ".join(guard_config.allowed_usernames)))
-    guard_status = first_real(
-        "not_checked",
-        value(data.account_switch, "account_guard_status", ""),
-        value(data.post_phone, "account_guard_status", ""),
-        value(data.daily, "account_guard_status", ""),
+    guard_status = (
+        value(data.account_switch, "account_guard_status", "unknown")
+        if has_account_switch
+        else first_real(
+            "not_checked",
+            value(data.post_phone, "account_guard_status", ""),
+            value(data.daily, "account_guard_status", ""),
+        )
     )
-    guard_action = first_real(
-        "not_checked",
-        value(data.account_switch, "account_guard_action", ""),
-        value(data.post_phone, "account_guard_action", ""),
-        value(data.daily, "account_guard_action", ""),
+    guard_action = (
+        value(data.account_switch, "account_guard_action", "stop")
+        if has_account_switch
+        else first_real(
+            "not_checked",
+            value(data.post_phone, "account_guard_action", ""),
+            value(data.daily, "account_guard_action", ""),
+        )
     )
-    guard_message = first_real(
-        "not_checked",
-        value(data.account_switch, "account_guard_message", ""),
-        value(data.post_phone, "account_guard_message", ""),
-        value(data.daily, "account_guard_message", ""),
+    guard_message = (
+        value(data.account_switch, "account_guard_message", "not_checked")
+        if has_account_switch
+        else first_real(
+            "not_checked",
+            value(data.post_phone, "account_guard_message", ""),
+            value(data.daily, "account_guard_message", ""),
+        )
     )
     active_browser_profile = first_real(
         str(active_path),
@@ -389,6 +402,7 @@ def build_markdown(data: DashboardData) -> str:
         f"- expected_username: `{value(data.account_switch, 'expected_username', guard_config.expected_username)}`",
         f"- active_browser_profile_path: `{value(data.account_switch, 'active_browser_profile_path', str(active_path))}`",
         f"- fallback_browser_profile_path: `{value(data.account_switch, 'fallback_browser_profile_path', str(fallback_path))}`",
+        f"- wrong_profile_backup_path: `{value(data.account_switch, 'wrong_profile_backup_path', 'none')}`",
         f"- detected_username_before: `{value(data.account_switch, 'detected_username_before', 'not_checked')}`",
         f"- detected_username_after: `{value(data.account_switch, 'detected_username_after', 'not_checked')}`",
         f"- account_guard_status: `{value(data.account_switch, 'account_guard_status', 'not_checked')}`",
@@ -593,20 +607,26 @@ def write_dashboard() -> None:
     )
     print(
         "detected_username="
-        + first_real(
-            "not_checked",
-            value(data.account_switch, "detected_username_after", ""),
-            value(data.post_phone, "detected_username", ""),
-            value(data.daily, "detected_username", ""),
+        + (
+            value(data.account_switch, "detected_username_after", "unknown")
+            if data.account_switch
+            else first_real(
+                "not_checked",
+                value(data.post_phone, "detected_username", ""),
+                value(data.daily, "detected_username", ""),
+            )
         )
     )
     print(
         "account_guard_status="
-        + first_real(
-            "not_checked",
-            value(data.account_switch, "account_guard_status", ""),
-            value(data.post_phone, "account_guard_status", ""),
-            value(data.daily, "account_guard_status", ""),
+        + (
+            value(data.account_switch, "account_guard_status", "unknown")
+            if data.account_switch
+            else first_real(
+                "not_checked",
+                value(data.post_phone, "account_guard_status", ""),
+                value(data.daily, "account_guard_status", ""),
+            )
         )
     )
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")

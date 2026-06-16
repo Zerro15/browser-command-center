@@ -435,6 +435,9 @@ class KworkRpaBridge:
         if not self.available:
             self.report.detected_username = "unknown"
             return "unknown"
+        if self.report.login_detected != "true":
+            self.report.detected_username = "unknown"
+            return "unknown"
         try:
             from account_guard import normalize_username
 

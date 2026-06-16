@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from dataclasses import dataclass
@@ -44,6 +45,7 @@ class SwitchSnapshot:
     account_guard_message: str
     phone_verification_detected: str
     current_url: str
+    wrong_profile_backup_path: str = ""
 
 
 def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> SwitchSnapshot:
@@ -63,6 +65,7 @@ def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> Swit
         account_guard_message=guard.account_guard_message,
         phone_verification_detected=str(phone_detected).lower(),
         current_url=bridge.page.url if bridge.available else "unknown",
+        wrong_profile_backup_path=os.environ.get("KWORK_WRONG_PROFILE_BACKUP_PATH", ""),
     )
 
 
@@ -76,6 +79,7 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
         f"- expected_username: `{final.expected_username}`",
         f"- active_browser_profile_path: `{final.active_browser_profile_path}`",
         f"- fallback_browser_profile_path: `{final.fallback_browser_profile_path}`",
+        f"- wrong_profile_backup_path: `{final.wrong_profile_backup_path or 'none'}`",
         f"- detected_username_before: `{before.detected_username}`",
         f"- detected_username_after: `{final.detected_username}`",
         f"- account_guard_status: `{final.account_guard_status}`",
