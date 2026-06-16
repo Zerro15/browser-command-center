@@ -585,6 +585,68 @@ npm run money:cover-upload-cdp
 
 `cover-upload-cdp` may attach the selected local PNG if the file input is visible, but it never clicks save, moderation, publish, send, proposal, order, phone, withdrawal, delete, or confirmation buttons.
 
+## Human-In-The-Loop ChatGPT Cover Workflow
+
+Codex does not automate ChatGPT UI. It does not open `chatgpt.com`, paste prompts, wait for image generation, or download ChatGPT outputs. The user generates covers manually, then Kwork Money OS validates and uploads the selected local file.
+
+1. Generate copy-paste prompts:
+
+```bash
+npm run money:cover-prompt-studio
+```
+
+Outputs:
+
+```text
+data/kwork_studio/cover_prompts_for_chatgpt.md
+data/kwork_studio/cover_prompts_for_chatgpt.json
+reports/kwork_cover_prompt_studio_report.md
+```
+
+2. Copy prompts into ChatGPT manually and save PNG/JPG/WebP outputs here:
+
+```text
+data/kwork_studio/covers/inbox/
+```
+
+3. Check inbox images:
+
+```bash
+npm run money:cover-inbox-check
+```
+
+4. Select one file:
+
+```bash
+npm run money:cover-select -- --file cover_01.png
+```
+
+If exactly one valid image is in inbox, this can also be used:
+
+```bash
+npm run money:cover-select -- --interactive
+```
+
+5. Process selected cover for Kwork:
+
+```bash
+npm run money:cover-process-selected
+```
+
+Expected processed file:
+
+```text
+data/kwork_studio/covers/processed/selected_cover_kwork.png
+```
+
+6. Upload through guarded Windows CDP:
+
+```bash
+npm run money:cover-upload-cdp
+```
+
+The upload command checks `ZerroOne`, Account Guard, and persistence first. It never clicks `Сохранить`, `На модерацию`, `Опубликовать`, `Отправить`, proposal/order/phone/withdrawal/delete/confirmation buttons. Final review and save/moderation decisions are manual-only.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:

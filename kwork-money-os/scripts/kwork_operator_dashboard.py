@@ -46,6 +46,10 @@ KWORK_FILL_CDP_REPORT = REPORTS / "kwork_fill_cdp_report.md"
 KWORK_STUDIO_REPORT = REPORTS / "kwork_studio_report.md"
 KWORK_COMPETITOR_SCAN_REPORT = REPORTS / "kwork_competitor_scan_report.md"
 KWORK_COVER_STUDIO_REPORT = REPORTS / "kwork_cover_studio_report.md"
+KWORK_COVER_PROMPT_REPORT = REPORTS / "kwork_cover_prompt_studio_report.md"
+KWORK_COVER_INBOX_REPORT = REPORTS / "kwork_cover_inbox_report.md"
+KWORK_COVER_SELECTION_REPORT = REPORTS / "kwork_cover_selection_report.md"
+KWORK_COVER_PROCESSED_REPORT = REPORTS / "kwork_cover_processed_report.md"
 KWORK_COVER_UPLOAD_REPORT = REPORTS / "kwork_cover_upload_report.md"
 KWORK_FULL_FILL_CDP_REPORT = REPORTS / "kwork_full_fill_cdp_report.md"
 KWORK_MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
@@ -81,6 +85,10 @@ class DashboardData:
     kwork_studio: dict[str, str]
     competitor_scan: dict[str, str]
     cover_studio: dict[str, str]
+    cover_prompt: dict[str, str]
+    cover_inbox: dict[str, str]
+    cover_selection: dict[str, str]
+    cover_processed: dict[str, str]
     cover_upload: dict[str, str]
     full_fill_cdp: dict[str, str]
     marketing_qa: dict[str, str]
@@ -290,6 +298,10 @@ def collect_data() -> DashboardData:
     kwork_studio_text = read_optional(KWORK_STUDIO_REPORT)
     competitor_scan_text = read_optional(KWORK_COMPETITOR_SCAN_REPORT)
     cover_studio_text = read_optional(KWORK_COVER_STUDIO_REPORT)
+    cover_prompt_text = read_optional(KWORK_COVER_PROMPT_REPORT)
+    cover_inbox_text = read_optional(KWORK_COVER_INBOX_REPORT)
+    cover_selection_text = read_optional(KWORK_COVER_SELECTION_REPORT)
+    cover_processed_text = read_optional(KWORK_COVER_PROCESSED_REPORT)
     cover_upload_text = read_optional(KWORK_COVER_UPLOAD_REPORT)
     full_fill_cdp_text = read_optional(KWORK_FULL_FILL_CDP_REPORT)
     marketing_qa_text = read_optional(KWORK_MARKETING_QA_REPORT)
@@ -314,6 +326,10 @@ def collect_data() -> DashboardData:
         kwork_studio=parse_fields(kwork_studio_text),
         competitor_scan=parse_fields(competitor_scan_text),
         cover_studio=parse_fields(cover_studio_text),
+        cover_prompt=parse_fields(cover_prompt_text),
+        cover_inbox=parse_fields(cover_inbox_text),
+        cover_selection=parse_fields(cover_selection_text),
+        cover_processed=parse_fields(cover_processed_text),
         cover_upload=parse_fields(cover_upload_text),
         full_fill_cdp=parse_fields(full_fill_cdp_text),
         marketing_qa=parse_fields(marketing_qa_text),
@@ -425,6 +441,9 @@ def build_markdown(data: DashboardData) -> str:
         f"- kwork_studio_status: `{value(data.kwork_studio, 'verdict', 'not_checked')}`",
         f"- competitor_scan_status: `{value(data.competitor_scan, 'status', 'not_checked')}`",
         f"- selected_cover: `{value(data.cover_studio, 'selected_cover', 'not_checked')}`",
+        f"- human_cover_prompts: `{value(data.cover_prompt, 'prompts_count', 'not_checked')}`",
+        f"- cover_inbox_images_count: `{value(data.cover_inbox, 'images_count', 'not_checked')}`",
+        f"- processed_cover: `{value(data.cover_processed, 'processed_file', 'not_checked')}`",
         f"- kwork_full_fill_status: `{value(data.full_fill_cdp, 'fields_filled', 'not_checked')}`",
         f"- marketing_qa_score: `{value(data.marketing_qa, 'score', 'not_checked')}`",
         f"- marketing_qa_verdict: `{value(data.marketing_qa, 'verdict', 'not_checked')}`",
@@ -542,8 +561,18 @@ def build_markdown(data: DashboardData) -> str:
         f"- competitors_count: `{value(data.competitor_scan, 'competitors_count', 'not_checked')}`",
         f"- cover_report: `{KWORK_COVER_STUDIO_REPORT.relative_to(ROOT)}`",
         f"- selected_cover: `{value(data.cover_studio, 'selected_cover', 'not_checked')}`",
+        f"- human_prompt_report: `{KWORK_COVER_PROMPT_REPORT.relative_to(ROOT)}`",
+        f"- prompt_count: `{value(data.cover_prompt, 'prompts_count', 'not_checked')}`",
+        f"- inbox_report: `{KWORK_COVER_INBOX_REPORT.relative_to(ROOT)}`",
+        f"- inbox_images_count: `{value(data.cover_inbox, 'images_count', 'not_checked')}`",
+        f"- valid_inbox_images_count: `{value(data.cover_inbox, 'valid_images_count', 'not_checked')}`",
+        f"- selection_report: `{KWORK_COVER_SELECTION_REPORT.relative_to(ROOT)}`",
+        f"- selected_original: `{value(data.cover_selection, 'selected_original', 'not_checked')}`",
+        f"- processed_report: `{KWORK_COVER_PROCESSED_REPORT.relative_to(ROOT)}`",
+        f"- processed_cover: `{value(data.cover_processed, 'processed_file', 'not_checked')}`",
         f"- cover_upload_report: `{KWORK_COVER_UPLOAD_REPORT.relative_to(ROOT)}`",
-        f"- cover_uploaded: `{value(data.cover_upload, 'cover_uploaded', 'not_checked')}`",
+        f"- cover_upload_attempted: `{value(data.cover_upload, 'upload_attempted', value(data.cover_upload, 'cover_uploaded', 'not_checked'))}`",
+        f"- cover_upload_success: `{value(data.cover_upload, 'upload_success', 'not_checked')}`",
         f"- full_fill_report: `{KWORK_FULL_FILL_CDP_REPORT.relative_to(ROOT)}`",
         f"- full_fill_fields_filled: `{value(data.full_fill_cdp, 'fields_filled', 'not_checked')}`",
         f"- full_fill_fields_missing: `{value(data.full_fill_cdp, 'fields_missing', 'not_checked')}`",
