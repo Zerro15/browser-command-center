@@ -23,6 +23,7 @@ from browser_rpa_bridge import KWORK_HOME_URL, REPORT_PATH, SCREENSHOT_DIR, Kwor
 
 SWITCH_REPORT_PATH = REPORTS / "account_switch_report.md"
 KWORK_LOGIN_URL = "https://kwork.ru/login"
+MANAGE_KWORKS_URL = "https://kwork.ru/manage_kworks"
 MANUAL_LOGIN_MESSAGE = (
     "ВНИМАНИЕ: войди вручную именно в ZerroOne в открытом Chromium. "
     "Не используй Яндекс.Браузер. "
@@ -65,6 +66,7 @@ class LoginAttempt:
     account_guard_action: str
     current_url: str
     title: str
+    manage_kworks_accessible: bool = False
 
 
 def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> SwitchSnapshot:
@@ -107,9 +109,30 @@ def print_login_attempt(attempt: LoginAttempt, total: int) -> None:
         f"login_detected={attempt.login_detected} "
         f"detected_username={attempt.detected_username} "
         f"account_guard_status={attempt.account_guard_status} "
+        f"manage_kworks_accessible={str(attempt.manage_kworks_accessible).lower()} "
         f"url={attempt.current_url} "
         f"title={attempt.title}"
     )
+
+
+def check_manage_kworks_access(bridge: KworkRpaBridge) -> bool:
+    if not bridge.available or not bridge.context:
+        return False
+    page = None
+    try:
+        page = bridge.context.new_page()
+        page.goto(MANAGE_KWORKS_URL, wait_until="commit", timeout=12_000)
+        page.wait_for_timeout(800)
+        return "/login" not in page.url.lower() and "login" not in page.url.lower()
+    except Exception as error:
+        bridge.report.warn(f"Unable to check manage_kworks access: {error}")
+        return False
+    finally:
+        if page:
+            try:
+                page.close()
+            except Exception:
+                pass
 
 
 def wait_for_login_detection(
@@ -133,6 +156,7 @@ def wait_for_login_detection(
             account_guard_action=final_snapshot.account_guard_action,
             current_url=final_snapshot.current_url,
             title=page_title(bridge),
+            manage_kworks_accessible=check_manage_kworks_access(bridge),
         )
         attempts.append(attempt)
         print_login_attempt(attempt, max_attempts)
@@ -142,6 +166,52 @@ def wait_for_login_detection(
             break
         if index < max_attempts:
             time.sleep(delay)
+    return final_snapshot, attempts
+
+
+def poll_until_login(
+    bridge: KworkRpaBridge,
+    expected_username: str,
+    timeout_minutes: int,
+    poll_interval_seconds: int,
+) -> tuple[SwitchSnapshot, list[LoginAttempt]]:
+    attempts: list[LoginAttempt] = []
+    deadline = time.monotonic() + max(1, timeout_minutes) * 60
+    interval = max(1, poll_interval_seconds)
+    final_snapshot = snapshot("poll-0", bridge, expected_username)
+    print("=" * 86)
+    print(
+        f"Войди вручную именно в {expected_username} в открытом Chromium. "
+        f"Не используй обычный браузер. Скрипт сам ждёт до {timeout_minutes} минут "
+        f"и проверяет вход каждые {interval} секунд."
+    )
+    print("Скрипт не вводит логин, пароль, SMS и не нажимает final buttons.")
+    print("=" * 86)
+    while time.monotonic() <= deadline:
+        final_snapshot = snapshot(f"poll-{len(attempts) + 1}", bridge, expected_username)
+        manage_accessible = check_manage_kworks_access(bridge)
+        if final_snapshot.account_guard_status != "ok" and manage_accessible:
+            bridge.open(f"https://kwork.ru/user/{expected_username}")
+            final_snapshot = snapshot(f"poll-profile-{len(attempts) + 1}", bridge, expected_username)
+        attempt = LoginAttempt(
+            index=len(attempts) + 1,
+            login_detected=final_snapshot.login_detected,
+            detected_username=final_snapshot.detected_username,
+            account_guard_status=final_snapshot.account_guard_status,
+            account_guard_action=final_snapshot.account_guard_action,
+            current_url=final_snapshot.current_url,
+            title=page_title(bridge),
+            manage_kworks_accessible=manage_accessible,
+        )
+        attempts.append(attempt)
+        print_login_attempt(attempt, max(1, int(timeout_minutes * 60 / interval)))
+        if final_snapshot.account_guard_status == "ok" and final_snapshot.detected_username == expected_username:
+            return final_snapshot, attempts
+        if final_snapshot.detected_username not in ("unknown", expected_username):
+            bridge.wait_and_screenshot("manual-poll-account-blocked")
+            return final_snapshot, attempts
+        time.sleep(interval)
+    final_snapshot = snapshot("poll-timeout", bridge, expected_username)
     return final_snapshot, attempts
 
 
@@ -159,6 +229,12 @@ def write_switch_report(
     report: RpaReport,
     login_page_opened: bool = False,
     attempts: list[LoginAttempt] | None = None,
+    login_wait_mode: str = "hold",
+    timeout_minutes: int | None = None,
+    poll_interval_seconds: int | None = None,
+    persistence_confirmed: bool = False,
+    last_url: str = "",
+    last_title: str = "",
 ) -> None:
     ensure_dir(SWITCH_REPORT_PATH.parent)
     final = after or before
@@ -172,6 +248,12 @@ def write_switch_report(
         f"- fallback_browser_profile_path: `{final.fallback_browser_profile_path}`",
         f"- wrong_profile_backup_path: `{final.wrong_profile_backup_path or 'none'}`",
         f"- login_page_opened: `{str(login_page_opened).lower()}`",
+        f"- login_wait_mode: `{login_wait_mode}`",
+        f"- timeout_minutes: `{timeout_minutes if timeout_minutes is not None else 'not_set'}`",
+        f"- poll_interval_seconds: `{poll_interval_seconds if poll_interval_seconds is not None else 'not_set'}`",
+        f"- attempts_count: `{len(attempts)}`",
+        f"- last_url: `{last_url or final.current_url}`",
+        f"- last_title: `{last_title or 'unknown'}`",
         f"- detected_username_before: `{before.detected_username}`",
         f"- detected_username_after: `{final.detected_username}`",
         f"- final_detected_username: `{final.detected_username}`",
@@ -180,6 +262,7 @@ def write_switch_report(
         f"- account_guard_status: `{final.account_guard_status}`",
         f"- account_guard_action: `{final.account_guard_action}`",
         f"- account_guard_message: `{final.account_guard_message}`",
+        f"- persistence_confirmed: `{str(persistence_confirmed).lower()}`",
         f"- phone_verification_detected: `{final.phone_verification_detected}`",
         "- create_kwork_accessible: `not_checked_in_switch_flow`",
         "- can_continue_profile_setup: `not_checked_in_switch_flow`",
@@ -192,6 +275,7 @@ def write_switch_report(
             f"- attempt {item.index}: login_detected=`{item.login_detected}`, "
             f"detected_username=`{item.detected_username}`, "
             f"account_guard_status=`{item.account_guard_status}`, "
+            f"manage_kworks_accessible=`{str(item.manage_kworks_accessible).lower()}`, "
             f"url=`{item.current_url}`, title=`{item.title}`"
         ) for item in attempts),
         *([] if attempts else ["- not_checked: `wait-login loop was not run`"]),
@@ -277,6 +361,9 @@ def main() -> None:
     parser.add_argument("--login-page", action="store_true", help="Open the Kwork login page when the target profile is not logged in")
     parser.add_argument("--wait-login", action="store_true", help="After the manual wait, poll login/username detection up to 12 times")
     parser.add_argument("--diagnose", action="store_true", help="Run login diagnostics/restart check after the manual wait loop")
+    parser.add_argument("--poll-until-login", action="store_true", help="Poll the visible Chromium session until ZerroOne login is detected")
+    parser.add_argument("--timeout-minutes", type=int, default=30, help="Maximum minutes for --poll-until-login")
+    parser.add_argument("--poll-interval-seconds", type=int, default=5, help="Seconds between --poll-until-login checks")
     parser.add_argument("--wait-seconds", type=int, default=90, help="Fallback wait when --hold runs without interactive stdin")
     parser.add_argument("--wait-attempts", type=int, default=12, help="Number of login detection attempts after manual wait")
     parser.add_argument("--wait-delay-seconds", type=int, default=5, help="Delay between login detection attempts")
@@ -314,7 +401,30 @@ def main() -> None:
         print(f"fallback_browser_profile_path={fallback_path}")
         print_guard_state("before_hold", report)
         after = None
-        if args.hold:
+        persistence_confirmed = False
+        if args.poll_until_login:
+            after, login_attempts = poll_until_login(
+                bridge,
+                account,
+                timeout_minutes=args.timeout_minutes,
+                poll_interval_seconds=args.poll_interval_seconds,
+            )
+            bridge.wait_and_screenshot("manual-poll-account-switch-after")
+            report.write()
+            write_switch_report(
+                before,
+                after,
+                report,
+                login_page_opened=login_page_opened,
+                attempts=login_attempts,
+                login_wait_mode="poll_until_login",
+                timeout_minutes=args.timeout_minutes,
+                poll_interval_seconds=args.poll_interval_seconds,
+                last_url=login_attempts[-1].current_url if login_attempts else after.current_url,
+                last_title=login_attempts[-1].title if login_attempts else page_title(bridge),
+            )
+            print_guard_state("after_poll", report)
+        elif args.hold:
             wait_for_manual_switch(bridge, args.wait_seconds, account)
             if args.wait_login:
                 after, login_attempts = wait_for_login_detection(
@@ -333,15 +443,17 @@ def main() -> None:
                 report,
                 login_page_opened=login_page_opened,
                 attempts=login_attempts,
+                last_url=login_attempts[-1].current_url if login_attempts else after.current_url,
+                last_title=login_attempts[-1].title if login_attempts else page_title(bridge),
             )
             print_guard_state("after_hold", report)
         if after and after.account_guard_status == "ok":
             print("account_switch_ready=true")
         elif after:
             print("account_switch_ready=false")
-    if args.diagnose:
+    if args.diagnose or args.poll_until_login:
         from argparse import Namespace
-        from kwork_login_diagnostics import run_diagnostics
+        from kwork_login_diagnostics import run_diagnostics, write_report
 
         diagnostic = run_diagnostics(
             Namespace(
@@ -353,10 +465,43 @@ def main() -> None:
                 restart_check=True,
             )
         )
+        if args.poll_until_login:
+            diagnostic.login_wait_mode = "poll_until_login"
+            diagnostic.timeout_minutes = str(args.timeout_minutes)
+            diagnostic.poll_interval_seconds = str(args.poll_interval_seconds)
+            diagnostic.attempts_count = len(login_attempts)
+            if login_attempts:
+                diagnostic.last_url = login_attempts[-1].current_url
+                diagnostic.last_title = login_attempts[-1].title
+            diagnostic.final_detected_username = diagnostic.detected_username
+            write_report(diagnostic)
         print(f"diagnostics_report={REPORTS / 'kwork_login_diagnostics_report.md'}")
         print(f"diagnostics_detected_username={diagnostic.detected_username}")
         print(f"diagnostics_account_guard_status={diagnostic.account_guard_status}")
         print(f"persistence_confirmed={str(diagnostic.persistence_confirmed).lower()}")
+        persistence_confirmed = diagnostic.persistence_confirmed
+        if after:
+            write_switch_report(
+                before,
+                after,
+                report,
+                login_page_opened=login_page_opened,
+                attempts=login_attempts,
+                login_wait_mode="poll_until_login" if args.poll_until_login else "hold",
+                timeout_minutes=args.timeout_minutes if args.poll_until_login else None,
+                poll_interval_seconds=args.poll_interval_seconds if args.poll_until_login else None,
+                persistence_confirmed=persistence_confirmed,
+                last_url=login_attempts[-1].current_url if login_attempts else after.current_url,
+                last_title=login_attempts[-1].title if login_attempts else "unknown",
+            )
+        if args.poll_until_login:
+            if after and after.detected_username not in ("unknown", account):
+                raise SystemExit(2)
+            if diagnostic.persistence_confirmed and diagnostic.detected_username == account:
+                raise SystemExit(0)
+            if diagnostic.detected_username not in ("unknown", account):
+                raise SystemExit(2)
+            raise SystemExit(3)
 
 
 if __name__ == "__main__":

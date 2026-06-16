@@ -39,6 +39,7 @@ OFFER_FACTORY_REPORT = REPORTS / "offer_factory_report.md"
 ORDER_EXECUTOR_REPORT = REPORTS / "order_executor_report.md"
 POST_PHONE_REPORT = REPORTS / "post_phone_readiness_report.md"
 ACCOUNT_SWITCH_REPORT = REPORTS / "account_switch_report.md"
+LOGIN_DIAGNOSTICS_REPORT = REPORTS / "kwork_login_diagnostics_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -64,6 +65,7 @@ class DashboardData:
     best: dict[str, str]
     post_phone: dict[str, str]
     account_switch: dict[str, str]
+    login_diagnostics: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -263,6 +265,7 @@ def collect_data() -> DashboardData:
     best_text = read_text(BEST_REPORT)
     post_phone_text = read_optional(POST_PHONE_REPORT)
     account_switch_text = read_optional(ACCOUNT_SWITCH_REPORT)
+    login_diagnostics_text = read_optional(LOGIN_DIAGNOSTICS_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -277,6 +280,7 @@ def collect_data() -> DashboardData:
         best=parse_fields(best_text),
         post_phone=parse_fields(post_phone_text),
         account_switch=parse_fields(account_switch_text),
+        login_diagnostics=parse_fields(login_diagnostics_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -313,48 +317,40 @@ def build_markdown(data: DashboardData) -> str:
     best_title = value(data.best, "project_title")
     guard_config = load_account_guard_config()
     active_path, fallback_path = browser_profile_paths(guard_config)
-    has_account_switch = bool(data.account_switch)
-    guard_detected = (
-        value(data.account_switch, "detected_username_after", "unknown")
-        if has_account_switch
-        else first_real(
-            "not_checked",
-            value(data.post_phone, "detected_username", ""),
-            value(data.daily, "detected_username", ""),
-        )
+    guard_detected = first_real(
+        "not_checked",
+        value(data.account_switch, "detected_username_after", ""),
+        value(data.login_diagnostics, "final_detected_username", ""),
+        value(data.post_phone, "detected_username", ""),
+        value(data.daily, "detected_username", ""),
     )
     guard_expected = value(data.post_phone, "expected_username", value(data.daily, "expected_username", guard_config.expected_username))
     guard_allowed = value(data.post_phone, "allowed_usernames", value(data.daily, "allowed_usernames", ", ".join(guard_config.allowed_usernames)))
-    guard_status = (
-        value(data.account_switch, "account_guard_status", "unknown")
-        if has_account_switch
-        else first_real(
-            "not_checked",
-            value(data.post_phone, "account_guard_status", ""),
-            value(data.daily, "account_guard_status", ""),
-        )
+    guard_status = first_real(
+        "not_checked",
+        value(data.account_switch, "account_guard_status", ""),
+        value(data.login_diagnostics, "account_guard_status", ""),
+        value(data.post_phone, "account_guard_status", ""),
+        value(data.daily, "account_guard_status", ""),
     )
-    guard_action = (
-        value(data.account_switch, "account_guard_action", "stop")
-        if has_account_switch
-        else first_real(
-            "not_checked",
-            value(data.post_phone, "account_guard_action", ""),
-            value(data.daily, "account_guard_action", ""),
-        )
+    guard_action = first_real(
+        "not_checked",
+        value(data.account_switch, "account_guard_action", ""),
+        value(data.login_diagnostics, "account_guard_action", ""),
+        value(data.post_phone, "account_guard_action", ""),
+        value(data.daily, "account_guard_action", ""),
     )
-    guard_message = (
-        value(data.account_switch, "account_guard_message", "not_checked")
-        if has_account_switch
-        else first_real(
-            "not_checked",
-            value(data.post_phone, "account_guard_message", ""),
-            value(data.daily, "account_guard_message", ""),
-        )
+    guard_message = first_real(
+        "not_checked",
+        value(data.account_switch, "account_guard_message", ""),
+        value(data.login_diagnostics, "account_guard_message", ""),
+        value(data.post_phone, "account_guard_message", ""),
+        value(data.daily, "account_guard_message", ""),
     )
     active_browser_profile = first_real(
         str(active_path),
         value(data.account_switch, "active_browser_profile_path", ""),
+        value(data.login_diagnostics, "profile_path", ""),
         value(data.post_phone, "active_browser_profile_path", ""),
         value(data.daily, "active_browser_profile_path", ""),
     )
@@ -376,6 +372,7 @@ def build_markdown(data: DashboardData) -> str:
         f"- fallback_browser_profile_path: `{fallback_browser_profile}`",
         f"- detected_username: `{guard_detected}`",
         f"- account_guard_status: `{guard_status}`",
+        f"- login_persistence_confirmed: `{value(data.login_diagnostics, 'persistence_confirmed', 'not_checked')}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
@@ -396,6 +393,21 @@ def build_markdown(data: DashboardData) -> str:
         f"- account_guard_message: `{guard_message}`",
         "- warning: Профиль, кворки и отклики готовить только для ZerroOne. Перед публикацией убедись, что работаешь в нужном аккаунте.",
         "- if_mismatch: automation stops before profile fill, kwork draft fill, and browser lead scan; switch account manually in Playwright Chromium.",
+        "",
+        "## ZerroOne Login Diagnostics",
+        f"- report: `{LOGIN_DIAGNOSTICS_REPORT.relative_to(ROOT)}`",
+        f"- login_wait_mode: `{value(data.login_diagnostics, 'login_wait_mode', 'not_checked')}`",
+        f"- timeout_minutes: `{value(data.login_diagnostics, 'timeout_minutes', 'not_checked')}`",
+        f"- poll_interval_seconds: `{value(data.login_diagnostics, 'poll_interval_seconds', 'not_checked')}`",
+        f"- attempts_count: `{value(data.login_diagnostics, 'attempts_count', 'not_checked')}`",
+        f"- last_url: `{value(data.login_diagnostics, 'last_url', 'not_checked')}`",
+        f"- last_title: `{value(data.login_diagnostics, 'last_title', 'not_checked')}`",
+        f"- final_detected_username: `{value(data.login_diagnostics, 'final_detected_username', 'not_checked')}`",
+        f"- login_detected: `{value(data.login_diagnostics, 'login_detected', 'not_checked')}`",
+        f"- account_guard_status: `{value(data.login_diagnostics, 'account_guard_status', 'not_checked')}`",
+        f"- persistence_confirmed: `{value(data.login_diagnostics, 'persistence_confirmed', 'not_checked')}`",
+        f"- next_manual_step: `{value(data.login_diagnostics, 'next_fix', 'not_checked')}`",
+        "- mode: manual login only inside Playwright Chromium; no cookies are copied from normal browsers.",
         "",
         "## Account Switch",
         f"- report: `{ACCOUNT_SWITCH_REPORT.relative_to(ROOT)}`",
@@ -608,10 +620,10 @@ def write_dashboard() -> None:
     print(
         "detected_username="
         + (
-            value(data.account_switch, "detected_username_after", "unknown")
-            if data.account_switch
-            else first_real(
+            first_real(
                 "not_checked",
+                value(data.account_switch, "detected_username_after", ""),
+                value(data.login_diagnostics, "final_detected_username", ""),
                 value(data.post_phone, "detected_username", ""),
                 value(data.daily, "detected_username", ""),
             )
@@ -620,15 +632,16 @@ def write_dashboard() -> None:
     print(
         "account_guard_status="
         + (
-            value(data.account_switch, "account_guard_status", "unknown")
-            if data.account_switch
-            else first_real(
+            first_real(
                 "not_checked",
+                value(data.account_switch, "account_guard_status", ""),
+                value(data.login_diagnostics, "account_guard_status", ""),
                 value(data.post_phone, "account_guard_status", ""),
                 value(data.daily, "account_guard_status", ""),
             )
         )
     )
+    print(f"login_persistence_confirmed={value(data.login_diagnostics, 'persistence_confirmed', 'not_checked')}")
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
     print(f"post_phone_verification_detected={value(data.post_phone, 'phone_verification_detected', 'not_checked')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")

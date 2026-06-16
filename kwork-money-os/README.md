@@ -330,6 +330,33 @@ persistence_confirmed: true
 
 If `login_detected=true` but username is still unknown, the guard reports `unknown_logged_in`; open the public profile page `https://kwork.ru/user/ZerroOne` in Playwright Chromium and rerun diagnostics. If `login_detected=false`, finish manual login in Playwright Chromium. Final actions remain manual-only.
 
+## ZerroOne Long Poll Login
+
+Use this as the main manual login path when `.browser-profile-zerroone` is not authenticated:
+
+```bash
+npm run money:login-zerroone
+```
+
+Equivalent direct command from `kwork-money-os`:
+
+```bash
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --login-page --poll-until-login --timeout-minutes 30
+```
+
+This opens visible Playwright Chromium with `.browser-profile-zerroone`, opens the Kwork login page, and waits up to 30 minutes while checking every 5 seconds. The only manual step is entering login/password/SMS in that Playwright Chromium window. Do not use Yandex Browser or a normal Chrome profile for this workflow.
+
+The script does not type credentials, does not read passwords, does not copy cookies from any browser, and does not save credentials to files. It only checks public session signals, account menu/profile links, current URL/title, and safe read-only access such as `manage_kworks`.
+
+Success means both are true:
+
+```text
+detected_username=ZerroOne
+persistence_confirmed=true
+```
+
+If another username is detected, the wizard stops with Account Guard `blocked`. If the 30-minute timeout expires, it stops with `unknown` and asks to finish manual login in Playwright Chromium. Final actions remain blocked: profile save, publish, moderation, proposal/message send, order actions, withdrawal, phone/SMS, delete, and confirmations.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:

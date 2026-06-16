@@ -65,6 +65,13 @@ class DiagnosticResult:
     restart_after_username: str = "unknown"
     restart_before_login_detected: str = "unknown"
     restart_after_login_detected: str = "unknown"
+    login_wait_mode: str = "not_set"
+    timeout_minutes: str = "not_set"
+    poll_interval_seconds: str = "not_set"
+    attempts_count: int = 0
+    last_url: str = "unknown"
+    last_title: str = "unknown"
+    final_detected_username: str = "unknown"
     next_fix: str = ""
 
 
@@ -217,6 +224,13 @@ def write_report(result: DiagnosticResult) -> None:
     else:
         next_fix = "switch Playwright Chromium profile to the expected account; do not copy cookies from other browsers"
     result.next_fix = next_fix
+    result.attempts_count = result.attempts_count or len(result.detection_methods_results)
+    if result.last_url in {"", "unknown"}:
+        result.last_url = result.final_url
+    if result.last_title in {"", "unknown"}:
+        result.last_title = result.page_title
+    if result.final_detected_username in {"", "unknown"}:
+        result.final_detected_username = result.detected_username
 
     lines = [
         "# Kwork Login Diagnostics Report",
@@ -231,6 +245,13 @@ def write_report(result: DiagnosticResult) -> None:
         f"- opened_url: `{result.opened_url}`",
         f"- final_url: `{result.final_url}`",
         f"- page_title: `{result.page_title}`",
+        f"- login_wait_mode: `{result.login_wait_mode}`",
+        f"- timeout_minutes: `{result.timeout_minutes}`",
+        f"- poll_interval_seconds: `{result.poll_interval_seconds}`",
+        f"- attempts_count: `{result.attempts_count}`",
+        f"- last_url: `{result.last_url}`",
+        f"- last_title: `{result.last_title}`",
+        f"- final_detected_username: `{result.final_detected_username}`",
         f"- login_detected: `{result.login_detected}`",
         f"- detected_username: `{result.detected_username}`",
         f"- expected_username: `{result.expected_username}`",
