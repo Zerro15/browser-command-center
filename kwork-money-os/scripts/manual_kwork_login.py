@@ -22,6 +22,11 @@ from browser_rpa_bridge import KWORK_HOME_URL, REPORT_PATH, SCREENSHOT_DIR, Kwor
 
 
 SWITCH_REPORT_PATH = REPORTS / "account_switch_report.md"
+KWORK_LOGIN_URL = "https://kwork.ru/login"
+MANUAL_LOGIN_MESSAGE = (
+    "Войди вручную именно в аккаунт ZerroOne в открытом Chromium. "
+    "Не используй Яндекс.Браузер. После входа вернись в терминал и нажми Enter."
+)
 MANUAL_ONLY = [
     "Switch Kwork account manually in Playwright Chromium.",
     "Do not pass login/password/SMS through scripts, argv, files, or reports.",
@@ -143,10 +148,20 @@ def print_guard_state(prefix: str, report: RpaReport) -> None:
     print(f"{prefix}_account_guard_action={report.account_guard_action}")
 
 
-def wait_for_manual_switch(bridge: KworkRpaBridge, seconds: int) -> None:
+def print_manual_login_banner(account: str) -> None:
+    line = "=" * 86
+    print(line)
+    print(MANUAL_LOGIN_MESSAGE.replace("ZerroOne", account))
+    print("Скрипт не вводит логин, пароль, SMS и не нажимает final buttons.")
+    print(line)
+
+
+def wait_for_manual_switch(bridge: KworkRpaBridge, seconds: int, account: str) -> None:
     if seconds <= 0 and sys.stdin.isatty():
+        print_manual_login_banner(account)
         bridge.hold_open()
         return
+    print_manual_login_banner(account)
     print(
         "Нужно вручную переключиться на ZerroOne в открытом Chromium. "
         f"Жду {max(1, seconds)} секунд и затем проверю username повторно. "
@@ -175,7 +190,8 @@ def main() -> None:
         bridge.open(KWORK_HOME_URL)
         before = snapshot("before", bridge, account)
         if before.login_detected != "true":
-            print(f"Нужно вручную войти в {account} в открытом Chromium.")
+            bridge.open(KWORK_LOGIN_URL)
+            print_manual_login_banner(account)
         elif before.account_guard_status != "ok":
             print(f"Нужно вручную переключиться на {account} в открытом Chromium.")
         report.next_safe_command = (
@@ -191,7 +207,7 @@ def main() -> None:
         print_guard_state("before_hold", report)
         after = None
         if args.hold:
-            wait_for_manual_switch(bridge, args.wait_seconds)
+            wait_for_manual_switch(bridge, args.wait_seconds, account)
             after = snapshot("after", bridge, account)
             bridge.wait_and_screenshot("manual-account-switch-after")
             report.write()
