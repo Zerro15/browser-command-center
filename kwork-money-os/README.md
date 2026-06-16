@@ -328,6 +328,24 @@ Use the pieces separately when needed:
 
 All replies remain manual-only. Until phone verification is completed manually, do not send proposals or messages.
 
+Best Lead of Day:
+
+```bash
+npm run money:best-lead
+.venv/bin/python scripts/kwork_best_lead_of_day.py
+```
+
+Best Lead of Day is an offline analysis step. It reads `data/leads/kwork_leads.jsonl`, `reports/top_5_proposals.md`, and `data/leads/shortlist/`, then chooses one best project using final score, low risk, clear technical fit, realistic first-account price, and 2-7 day delivery fit.
+
+It writes:
+
+```text
+reports/best_lead_of_day.md
+data/leads/best_lead_of_day_proposal.md
+```
+
+These files are local-only. The proposal is not sent automatically. Sending proposals remains manual-only after phone verification is completed manually; do not automate `Предложить услугу`, `Отправить`, messages, phone/SMS, withdrawal, publication, moderation, or order actions.
+
 New outputs:
 
 ```text
@@ -339,6 +357,7 @@ reports/lead_radar_report.md
 reports/lead_shortlist.md
 reports/top_5_proposals.md
 reports/daily_lead_pipeline_report.md
+reports/best_lead_of_day.md
 data/profile/profile_optimized.json
 data/leads/
 data/offers/optimized/
@@ -356,6 +375,7 @@ Do not push:
 - `reports/lead_shortlist.md`;
 - `reports/top_5_proposals.md`;
 - `reports/daily_lead_pipeline_report.md`;
+- `reports/best_lead_of_day.md`;
 - `reports/reply_drafts.md`;
 - `reports/autopilot_report.md`;
 - `reports/browser_fill_report.md`;
