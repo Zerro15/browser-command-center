@@ -69,6 +69,36 @@ class LoginAttempt:
     manage_kworks_accessible: bool = False
 
 
+def write_gui_block_report(account: str, gui_result) -> None:
+    ensure_dir(SWITCH_REPORT_PATH.parent)
+    active_path, fallback_path = browser_profile_paths()
+    lines = [
+        "# Kwork Account Switch Report",
+        "",
+        f"- generated_at: `{datetime.now().isoformat(timespec='seconds')}`",
+        f"- expected_username: `{account}`",
+        f"- active_browser_profile_path: `{active_path}`",
+        f"- fallback_browser_profile_path: `{fallback_path}`",
+        "- login_page_opened: `false`",
+        "- login_wait_mode: `gui_preflight`",
+        "- final_detected_username: `unknown`",
+        "- login_detected: `not_checked`",
+        "- account_guard_status: `gui_unavailable`",
+        "- account_guard_action: `stop`",
+        "- account_guard_message: `Visible Playwright Chromium is not available. User cannot login manually.`",
+        f"- gui_available: `{str(gui_result.gui_available).lower()}`",
+        f"- wslg_available: `{str(gui_result.wslg_available).lower()}`",
+        f"- headed_launch_success: `{str(gui_result.headed_launch_success).lower()}`",
+        f"- reason_if_not_visible: `{gui_result.reason_if_not_visible or 'none'}`",
+        f"- next_manual_step: `{gui_result.next_fix or 'fix Playwright GUI first'}`",
+        "",
+        "## Safety",
+        "- Kwork login page was not opened because visible Chromium preflight failed.",
+        "- No login/password/SMS/cookies/final buttons were touched.",
+    ]
+    SWITCH_REPORT_PATH.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
 def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> SwitchSnapshot:
     bridge.detect_login_state()
     guard = evaluate_account_guard(
@@ -361,6 +391,7 @@ def main() -> None:
     parser.add_argument("--login-page", action="store_true", help="Open the Kwork login page when the target profile is not logged in")
     parser.add_argument("--wait-login", action="store_true", help="After the manual wait, poll login/username detection up to 12 times")
     parser.add_argument("--diagnose", action="store_true", help="Run login diagnostics/restart check after the manual wait loop")
+    parser.add_argument("--gui-check", action="store_true", help="Stop before Kwork login if visible Playwright Chromium is unavailable")
     parser.add_argument("--poll-until-login", action="store_true", help="Poll the visible Chromium session until ZerroOne login is detected")
     parser.add_argument("--timeout-minutes", type=int, default=30, help="Maximum minutes for --poll-until-login")
     parser.add_argument("--poll-interval-seconds", type=int, default=5, help="Seconds between --poll-until-login checks")
@@ -376,6 +407,18 @@ def main() -> None:
             f"--account must match configured expected_username `{config.expected_username}`. "
             f"Got `{args.account}`."
         )
+    if args.gui_check:
+        from playwright_gui_diagnostics import run_check
+
+        gui_result = run_check()
+        if not gui_result.gui_available:
+            write_gui_block_report(account, gui_result)
+            print("Visible Playwright Chromium is not available. User cannot login manually.")
+            print(f"gui_report={REPORTS / 'playwright_gui_diagnostics_report.md'}")
+            print(f"account_switch_report={SWITCH_REPORT_PATH}")
+            print(f"reason_if_not_visible={gui_result.reason_if_not_visible or 'none'}")
+            print(f"next_fix={gui_result.next_fix or 'fix Playwright GUI first'}")
+            raise SystemExit(4)
     active_path, fallback_path = browser_profile_paths(config)
     report = RpaReport(mode="manual-login", target_url=KWORK_HOME_URL)
     login_page_opened = False

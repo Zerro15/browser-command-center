@@ -55,6 +55,7 @@ FORBIDDEN_RULES = [
     Rule("post phone readiness bridge report", "kwork-money-os/reports/post_phone_readiness_bridge_report.md"),
     Rule("Kwork login diagnostics report", "kwork-money-os/reports/kwork_login_diagnostics_report.md"),
     Rule("Kwork login diagnostics bridge report", "kwork-money-os/reports/kwork_login_diagnostics_bridge_report.md"),
+    Rule("Playwright GUI diagnostics report", "kwork-money-os/reports/playwright_gui_diagnostics_report.md"),
     Rule("optimized profile fill report", "kwork-money-os/reports/profile_optimized_fill_report.md"),
     Rule("optimized profile fill plan", "kwork-money-os/reports/profile_optimized_fill_plan.md"),
     Rule("pre-phone setup report", "kwork-money-os/reports/pre_phone_setup_report.md"),

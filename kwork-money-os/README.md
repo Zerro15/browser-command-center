@@ -357,6 +357,33 @@ persistence_confirmed=true
 
 If another username is detected, the wizard stops with Account Guard `blocked`. If the 30-minute timeout expires, it stops with `unknown` and asks to finish manual login in Playwright Chromium. Final actions remain blocked: profile save, publish, moderation, proposal/message send, order actions, withdrawal, phone/SMS, delete, and confirmations.
 
+## Playwright GUI Diagnostics
+
+Before trying to log in to `ZerroOne`, verify that headed Playwright Chromium is actually visible from WSL:
+
+```bash
+npm run money:gui-check
+npm run money:gui-open-test
+```
+
+`money:gui-check` inspects WSL/WSLg environment variables, `/mnt/wslg`, Playwright Chromium availability, current user, cwd, and `.browser-profile-zerroone` write access. `money:gui-open-test` opens only `https://example.com` in visible Chromium with `headless=False` and keeps it open for confirmation.
+
+If the test Chromium window is visible, then run:
+
+```bash
+npm run money:login-zerroone
+```
+
+If the window is not visible, Kwork login through Playwright is not possible yet. Fix WSLg/GUI first; logging in through Yandex Browser or a normal Chrome window does not count. Do not transfer cookies, local storage, passwords, tokens, or session files from any normal browser.
+
+The GUI diagnostics report is local-only:
+
+```text
+reports/playwright_gui_diagnostics_report.md
+```
+
+`money:login-zerroone` includes a GUI preflight and stops before opening Kwork if visible Chromium is unavailable.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:
