@@ -62,6 +62,9 @@ class CdpReport:
     error_summary: str = "none"
     next_step: str = "not_checked"
     attempts: list[CdpAttempt] = field(default_factory=list)
+    foreground_policy: str = "normal"
+    background_mode: bool = False
+    brought_to_front_count: int = 0
 
 
 def ps_json(command: str) -> Any:
@@ -142,7 +145,15 @@ def wait_cdp(port: int, timeout_seconds: int = 25) -> bool:
     return False
 
 
-def launch_windows_browser(executable: str, profile: str, port: int, url: str) -> None:
+def launch_windows_browser(
+    executable: str,
+    profile: str,
+    port: int,
+    url: str,
+    background: bool = False,
+    no_focus: bool = False,
+    minimized: bool = False,
+) -> None:
     args = [
         f"--remote-debugging-port={port}",
         "--remote-allow-origins=*",
@@ -154,12 +165,13 @@ def launch_windows_browser(executable: str, profile: str, port: int, url: str) -
     ]
     args_json = json.dumps(args)
     exe_json = json.dumps(executable)
+    window_style = "Minimized" if background or minimized or no_focus else "Normal"
     ps = f"""
 $exe = {exe_json}
 $args = ConvertFrom-Json @'
 {args_json}
 '@
-Start-Process -FilePath $exe -ArgumentList $args | Out-Null
+Start-Process -FilePath $exe -ArgumentList $args -WindowStyle {window_style} | Out-Null
 [pscustomobject]@{{started=$true}} | ConvertTo-Json -Compress
 """
     ps_json(ps)
@@ -290,7 +302,10 @@ def open_cdp(report: CdpReport):
     return playwright, browser, page
 
 
-def prepare_browser(report: CdpReport, url: str) -> bool:
+def prepare_browser(report: CdpReport, url: str, background: bool = False, no_focus: bool = False, minimized: bool = False) -> bool:
+    report.background_mode = bool(background or no_focus or minimized)
+    report.foreground_policy = "minimized_no_focus" if report.background_mode else "normal"
+    report.brought_to_front_count = 0
     info = windows_info()
     report.browser_executable = str(info.get("browser") or "unknown")
     report.user_data_dir = str(info.get("profile") or "unknown")
@@ -307,7 +322,15 @@ def prepare_browser(report: CdpReport, url: str) -> bool:
         return True
     port = choose_port(DEFAULT_PORT)
     report.remote_debugging_port = port
-    launch_windows_browser(report.browser_executable, report.user_data_dir, port, url)
+    launch_windows_browser(
+        report.browser_executable,
+        report.user_data_dir,
+        port,
+        url,
+        background=background,
+        no_focus=no_focus,
+        minimized=minimized,
+    )
     report.browser_process_started = True
     report.visible_window_expected = True
     if not wait_cdp(port):
@@ -484,6 +507,9 @@ def write_report(report: CdpReport) -> None:
         f"- final_url: `{report.final_url}`",
         f"- page_title: `{report.page_title}`",
         f"- visible_window_expected: `{str(report.visible_window_expected).lower()}`",
+        f"- foreground_policy: `{report.foreground_policy}`",
+        f"- background_mode: `{str(report.background_mode).lower()}`",
+        f"- brought_to_front_count: `{report.brought_to_front_count}`",
         f"- browser_process_started: `{str(report.browser_process_started).lower()}`",
         f"- detected_username: `{report.detected_username}`",
         f"- account_guard_status: `{report.account_guard_status}`",

@@ -536,6 +536,55 @@ The hard final-button blocker records visible final buttons but does not click t
 
 Manual next step after fill: review the page visually in the dedicated Windows Chrome window. Only the user may decide to save the profile, save the kwork draft, or submit moderation. The scripts still do not enter passwords, SMS, phone data, withdrawal details, messages, proposals, or final confirmations.
 
+## Kwork Production Studio
+
+Production Studio prepares a stronger first kwork without publishing it:
+
+```bash
+npm run money:kwork-studio-cdp
+npm run money:kwork-competitor-scan-cdp
+npm run money:cover-studio
+npm run money:kwork-marketing-qa
+```
+
+It creates local-only strategy/spec/cover/QA artifacts under:
+
+```text
+data/kwork_studio/
+reports/kwork_studio_report.md
+reports/kwork_competitor_scan_report.md
+reports/kwork_cover_studio_report.md
+reports/kwork_marketing_qa_report.md
+```
+
+The selected first kwork is DevOps-strengthened: Telegram bot for requests, Google Sheets, `.env`, launch instructions, webhook/polling notes, Docker/Linux deploy in Premium, and no unsafe claims about spam, captcha bypass, mass registration, or guaranteed sales.
+
+Full multi-step fill through Windows CDP:
+
+```bash
+npm run money:kwork-full-fill-cdp
+npm run money:kwork-full-fill-cdp-bg
+```
+
+The background variant asks Windows Chrome/Edge to launch minimized/no-focus where possible and reports:
+
+```text
+foreground_policy
+background_mode
+brought_to_front_count
+```
+
+Target is `brought_to_front_count=0` for scan/preview/studio and no forced foreground during fill. At the end, review manually from the Windows taskbar.
+
+Cover tools:
+
+```bash
+npm run money:cover-preview-cdp
+npm run money:cover-upload-cdp
+```
+
+`cover-upload-cdp` may attach the selected local PNG if the file input is visible, but it never clicks save, moderation, publish, send, proposal, order, phone, withdrawal, delete, or confirmation buttons.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:

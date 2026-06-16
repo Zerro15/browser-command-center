@@ -43,6 +43,12 @@ LOGIN_DIAGNOSTICS_REPORT = REPORTS / "kwork_login_diagnostics_report.md"
 WINDOWS_CDP_REPORT = REPORTS / "windows_visible_browser_cdp_report.md"
 PROFILE_FILL_CDP_REPORT = REPORTS / "profile_fill_cdp_report.md"
 KWORK_FILL_CDP_REPORT = REPORTS / "kwork_fill_cdp_report.md"
+KWORK_STUDIO_REPORT = REPORTS / "kwork_studio_report.md"
+KWORK_COMPETITOR_SCAN_REPORT = REPORTS / "kwork_competitor_scan_report.md"
+KWORK_COVER_STUDIO_REPORT = REPORTS / "kwork_cover_studio_report.md"
+KWORK_COVER_UPLOAD_REPORT = REPORTS / "kwork_cover_upload_report.md"
+KWORK_FULL_FILL_CDP_REPORT = REPORTS / "kwork_full_fill_cdp_report.md"
+KWORK_MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -72,6 +78,12 @@ class DashboardData:
     windows_cdp: dict[str, str]
     profile_fill_cdp: dict[str, str]
     kwork_fill_cdp: dict[str, str]
+    kwork_studio: dict[str, str]
+    competitor_scan: dict[str, str]
+    cover_studio: dict[str, str]
+    cover_upload: dict[str, str]
+    full_fill_cdp: dict[str, str]
+    marketing_qa: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -275,6 +287,12 @@ def collect_data() -> DashboardData:
     windows_cdp_text = read_optional(WINDOWS_CDP_REPORT)
     profile_fill_cdp_text = read_optional(PROFILE_FILL_CDP_REPORT)
     kwork_fill_cdp_text = read_optional(KWORK_FILL_CDP_REPORT)
+    kwork_studio_text = read_optional(KWORK_STUDIO_REPORT)
+    competitor_scan_text = read_optional(KWORK_COMPETITOR_SCAN_REPORT)
+    cover_studio_text = read_optional(KWORK_COVER_STUDIO_REPORT)
+    cover_upload_text = read_optional(KWORK_COVER_UPLOAD_REPORT)
+    full_fill_cdp_text = read_optional(KWORK_FULL_FILL_CDP_REPORT)
+    marketing_qa_text = read_optional(KWORK_MARKETING_QA_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -293,6 +311,12 @@ def collect_data() -> DashboardData:
         windows_cdp=parse_fields(windows_cdp_text),
         profile_fill_cdp=parse_fields(profile_fill_cdp_text),
         kwork_fill_cdp=parse_fields(kwork_fill_cdp_text),
+        kwork_studio=parse_fields(kwork_studio_text),
+        competitor_scan=parse_fields(competitor_scan_text),
+        cover_studio=parse_fields(cover_studio_text),
+        cover_upload=parse_fields(cover_upload_text),
+        full_fill_cdp=parse_fields(full_fill_cdp_text),
+        marketing_qa=parse_fields(marketing_qa_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -398,6 +422,13 @@ def build_markdown(data: DashboardData) -> str:
         f"- post_phone_cdp_connected: `{value(data.post_phone, 'cdp_connected', 'not_checked')}`",
         f"- profile_fill_cdp_status: `{value(data.profile_fill_cdp, 'account_guard_status', 'not_checked')}`",
         f"- kwork_fill_cdp_status: `{value(data.kwork_fill_cdp, 'account_guard_status', 'not_checked')}`",
+        f"- kwork_studio_status: `{value(data.kwork_studio, 'verdict', 'not_checked')}`",
+        f"- competitor_scan_status: `{value(data.competitor_scan, 'status', 'not_checked')}`",
+        f"- selected_cover: `{value(data.cover_studio, 'selected_cover', 'not_checked')}`",
+        f"- kwork_full_fill_status: `{value(data.full_fill_cdp, 'fields_filled', 'not_checked')}`",
+        f"- marketing_qa_score: `{value(data.marketing_qa, 'score', 'not_checked')}`",
+        f"- marketing_qa_verdict: `{value(data.marketing_qa, 'verdict', 'not_checked')}`",
+        f"- foreground_policy: `{value(data.full_fill_cdp, 'foreground_policy', value(data.competitor_scan, 'foreground_policy', 'not_checked'))}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
@@ -501,6 +532,28 @@ def build_markdown(data: DashboardData) -> str:
         f"- kwork_final_buttons_blocked: `{value(data.kwork_fill_cdp, 'final_buttons_blocked', 'not_checked')}`",
         f"- kwork_next_manual_action: `{value(data.kwork_fill_cdp, 'user_next_step', 'not_checked')}`",
         "- safety: CDP fill may populate safe fields, but never clicks save, publish, moderation, send, proposal, phone, withdrawal, delete, or confirmation buttons.",
+        "",
+        "## Kwork Production Studio",
+        f"- studio_report: `{KWORK_STUDIO_REPORT.relative_to(ROOT)}`",
+        f"- selected_kwork_title: `{value(data.kwork_studio, 'selected_kwork_title', 'not_checked')}`",
+        f"- selected_positioning: `{value(data.kwork_studio, 'selected_positioning', 'not_checked')}`",
+        f"- competitor_scan_report: `{KWORK_COMPETITOR_SCAN_REPORT.relative_to(ROOT)}`",
+        f"- competitor_scan_status: `{value(data.competitor_scan, 'status', 'not_checked')}`",
+        f"- competitors_count: `{value(data.competitor_scan, 'competitors_count', 'not_checked')}`",
+        f"- cover_report: `{KWORK_COVER_STUDIO_REPORT.relative_to(ROOT)}`",
+        f"- selected_cover: `{value(data.cover_studio, 'selected_cover', 'not_checked')}`",
+        f"- cover_upload_report: `{KWORK_COVER_UPLOAD_REPORT.relative_to(ROOT)}`",
+        f"- cover_uploaded: `{value(data.cover_upload, 'cover_uploaded', 'not_checked')}`",
+        f"- full_fill_report: `{KWORK_FULL_FILL_CDP_REPORT.relative_to(ROOT)}`",
+        f"- full_fill_fields_filled: `{value(data.full_fill_cdp, 'fields_filled', 'not_checked')}`",
+        f"- full_fill_fields_missing: `{value(data.full_fill_cdp, 'fields_missing', 'not_checked')}`",
+        f"- full_fill_final_buttons_blocked: `{value(data.full_fill_cdp, 'final_buttons_blocked', 'not_checked')}`",
+        f"- marketing_qa_report: `{KWORK_MARKETING_QA_REPORT.relative_to(ROOT)}`",
+        f"- marketing_qa_score: `{value(data.marketing_qa, 'score', 'not_checked')}`",
+        f"- marketing_qa_verdict: `{value(data.marketing_qa, 'verdict', 'not_checked')}`",
+        f"- foreground_policy: `{value(data.full_fill_cdp, 'foreground_policy', value(data.competitor_scan, 'foreground_policy', 'not_checked'))}`",
+        f"- brought_to_front_count: `{value(data.full_fill_cdp, 'brought_to_front_count', value(data.competitor_scan, 'brought_to_front_count', 'not_checked'))}`",
+        f"- next_manual_step: `{value(data.marketing_qa, 'next_manual_step', value(data.full_fill_cdp, 'user_next_step', 'not_checked'))}`",
         "",
         "## Best Lead",
         f"- title: {best_title}",

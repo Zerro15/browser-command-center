@@ -66,6 +66,7 @@ FORBIDDEN_RULES = [
     Rule("optimized offers", "kwork-money-os/data/offers/optimized/"),
     Rule("best lead proposal", "kwork-money-os/data/leads/best_lead_of_day_proposal.md"),
     Rule("lead radar data", "kwork-money-os/data/leads/"),
+    Rule("kwork studio runtime data", "kwork-money-os/data/kwork_studio/"),
     Rule("best lead delivery kit", "kwork-money-os/data/delivery/best_lead_yandex_direct_sheets/"),
     Rule("prepared order workspaces", "kwork-money-os/data/orders/prepared/"),
     Rule("reply data", "kwork-money-os/data/replies/"),

@@ -46,6 +46,9 @@ class BrowserSessionDiagnostics:
     account_guard_status: str = "not_checked"
     account_guard_action: str = "not_checked"
     account_guard_message: str = ""
+    foreground_policy: str = "normal"
+    background_mode: bool = False
+    brought_to_front_count: int = 0
     screenshots: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -60,12 +63,18 @@ class KworkBrowserSession:
         start_url: str = MANAGE_KWORKS_URL,
         title: str = "Kwork Browser Session",
         keep_open: bool = False,
+        background: bool = False,
+        no_focus: bool = False,
+        minimized: bool = False,
     ) -> None:
         self.mode = mode
         self.account = account
         self.start_url = start_url
         self.title = title
         self.keep_open = keep_open
+        self.background = background
+        self.no_focus = no_focus
+        self.minimized = minimized
         self.diagnostics = BrowserSessionDiagnostics(browser_mode=mode, account=account)
         self.bridge: KworkRpaBridge | None = None
         self.bridge_context: Any = None
@@ -78,7 +87,7 @@ class KworkBrowserSession:
     def __enter__(self) -> "KworkBrowserSession":
         if self.mode == "windows_cdp":
             report = CdpReport(mode="browser-session", opened_url=self.start_url, account=self.account)
-            if not prepare_browser(report, self.start_url):
+            if not prepare_browser(report, self.start_url, background=self.background, no_focus=self.no_focus, minimized=self.minimized):
                 self.diagnostics.browser_executable = report.browser_executable
                 self.diagnostics.user_data_dir = report.user_data_dir
                 self.diagnostics.remote_debugging_port = report.remote_debugging_port
@@ -95,6 +104,9 @@ class KworkBrowserSession:
             self.diagnostics.browser_executable = report.browser_executable
             self.diagnostics.user_data_dir = report.user_data_dir
             self.diagnostics.remote_debugging_port = report.remote_debugging_port
+            self.diagnostics.foreground_policy = report.foreground_policy
+            self.diagnostics.background_mode = report.background_mode
+            self.diagnostics.brought_to_front_count = report.brought_to_front_count
             self.open(self.start_url)
             return self
         if self.mode == "wsl_playwright":
@@ -228,8 +240,19 @@ def open_kwork_browser_session(
     account: str = EXPECTED_ACCOUNT,
     start_url: str = MANAGE_KWORKS_URL,
     keep_open: bool = False,
+    background: bool = False,
+    no_focus: bool = False,
+    minimized: bool = False,
 ):
     """Factory kept small for flow scripts that should not know backend details."""
     config = load_account_guard_config()
     target_account = account or config.expected_username
-    return KworkBrowserSession(mode=mode, account=target_account, start_url=start_url, keep_open=keep_open)
+    return KworkBrowserSession(
+        mode=mode,
+        account=target_account,
+        start_url=start_url,
+        keep_open=keep_open,
+        background=background,
+        no_focus=no_focus,
+        minimized=minimized,
+    )
