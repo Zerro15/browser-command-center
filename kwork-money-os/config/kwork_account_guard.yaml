@@ -1,6 +1,12 @@
 expected_username: ZerroOne
+browser_mode: windows_cdp
 browser_profile_path: .browser-profile-zerroone
 fallback_browser_profile_path: .browser-profile
+windows_cdp:
+  enabled: true
+  account: ZerroOne
+  remote_debugging_port: 9223
+  profile_dir_name: KworkMoneyOS/ChromeProfiles/ZerroOne
 allowed_usernames:
   - ZerroOne
   - bogdanmashenin

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from _common import DATA, REPORTS, ROOT, ensure_dir
+from _common import CONFIG, DATA, REPORTS, ROOT, ensure_dir, load_yaml
 from account_guard import browser_profile_paths, load_account_guard_config
 
 
@@ -40,6 +40,7 @@ ORDER_EXECUTOR_REPORT = REPORTS / "order_executor_report.md"
 POST_PHONE_REPORT = REPORTS / "post_phone_readiness_report.md"
 ACCOUNT_SWITCH_REPORT = REPORTS / "account_switch_report.md"
 LOGIN_DIAGNOSTICS_REPORT = REPORTS / "kwork_login_diagnostics_report.md"
+WINDOWS_CDP_REPORT = REPORTS / "windows_visible_browser_cdp_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -66,6 +67,7 @@ class DashboardData:
     post_phone: dict[str, str]
     account_switch: dict[str, str]
     login_diagnostics: dict[str, str]
+    windows_cdp: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -266,6 +268,7 @@ def collect_data() -> DashboardData:
     post_phone_text = read_optional(POST_PHONE_REPORT)
     account_switch_text = read_optional(ACCOUNT_SWITCH_REPORT)
     login_diagnostics_text = read_optional(LOGIN_DIAGNOSTICS_REPORT)
+    windows_cdp_text = read_optional(WINDOWS_CDP_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -281,6 +284,7 @@ def collect_data() -> DashboardData:
         post_phone=parse_fields(post_phone_text),
         account_switch=parse_fields(account_switch_text),
         login_diagnostics=parse_fields(login_diagnostics_text),
+        windows_cdp=parse_fields(windows_cdp_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -316,9 +320,12 @@ def first_real(default: str, *items: str) -> str:
 def build_markdown(data: DashboardData) -> str:
     best_title = value(data.best, "project_title")
     guard_config = load_account_guard_config()
+    guard_config_raw = load_yaml(CONFIG / "kwork_account_guard.yaml")
+    browser_mode = str(guard_config_raw.get("browser_mode") or "wsl_playwright")
     active_path, fallback_path = browser_profile_paths(guard_config)
     guard_detected = first_real(
         "not_checked",
+        value(data.windows_cdp, "detected_username", ""),
         value(data.account_switch, "detected_username_after", ""),
         value(data.login_diagnostics, "final_detected_username", ""),
         value(data.post_phone, "detected_username", ""),
@@ -328,6 +335,7 @@ def build_markdown(data: DashboardData) -> str:
     guard_allowed = value(data.post_phone, "allowed_usernames", value(data.daily, "allowed_usernames", ", ".join(guard_config.allowed_usernames)))
     guard_status = first_real(
         "not_checked",
+        value(data.windows_cdp, "account_guard_status", ""),
         value(data.account_switch, "account_guard_status", ""),
         value(data.login_diagnostics, "account_guard_status", ""),
         value(data.post_phone, "account_guard_status", ""),
@@ -335,6 +343,7 @@ def build_markdown(data: DashboardData) -> str:
     )
     guard_action = first_real(
         "not_checked",
+        value(data.windows_cdp, "account_guard_action", ""),
         value(data.account_switch, "account_guard_action", ""),
         value(data.login_diagnostics, "account_guard_action", ""),
         value(data.post_phone, "account_guard_action", ""),
@@ -342,6 +351,7 @@ def build_markdown(data: DashboardData) -> str:
     )
     guard_message = first_real(
         "not_checked",
+        value(data.windows_cdp, "error_summary", ""),
         value(data.account_switch, "account_guard_message", ""),
         value(data.login_diagnostics, "account_guard_message", ""),
         value(data.post_phone, "account_guard_message", ""),
@@ -368,11 +378,14 @@ def build_markdown(data: DashboardData) -> str:
         "",
         "## Current Status",
         f"- login_detected: `{value(data.daily, 'login_detected')}`",
+        f"- browser_mode: `{browser_mode}`",
         f"- active_browser_profile_path: `{active_browser_profile}`",
         f"- fallback_browser_profile_path: `{fallback_browser_profile}`",
         f"- detected_username: `{guard_detected}`",
         f"- account_guard_status: `{guard_status}`",
         f"- login_persistence_confirmed: `{value(data.login_diagnostics, 'persistence_confirmed', 'not_checked')}`",
+        f"- windows_cdp_connected: `{value(data.windows_cdp, 'cdp_connected', 'not_checked')}`",
+        f"- windows_cdp_persistence_confirmed: `{value(data.windows_cdp, 'persistence_confirmed', 'not_checked')}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
@@ -393,6 +406,21 @@ def build_markdown(data: DashboardData) -> str:
         f"- account_guard_message: `{guard_message}`",
         "- warning: Профиль, кворки и отклики готовить только для ZerroOne. Перед публикацией убедись, что работаешь в нужном аккаунте.",
         "- if_mismatch: automation stops before profile fill, kwork draft fill, and browser lead scan; switch account manually in Playwright Chromium.",
+        "",
+        "## Windows Visible Browser CDP",
+        f"- browser_mode: `{browser_mode}`",
+        f"- report: `{WINDOWS_CDP_REPORT.relative_to(ROOT)}`",
+        f"- windows_browser_found: `{value(data.windows_cdp, 'windows_browser_found', 'not_checked')}`",
+        f"- browser_executable: `{value(data.windows_cdp, 'browser_executable', 'not_checked')}`",
+        f"- user_data_dir: `{value(data.windows_cdp, 'user_data_dir', 'not_checked')}`",
+        f"- remote_debugging_port: `{value(data.windows_cdp, 'remote_debugging_port', 'not_checked')}`",
+        f"- cdp_connected: `{value(data.windows_cdp, 'cdp_connected', 'not_checked')}`",
+        f"- visible_window_expected: `{value(data.windows_cdp, 'visible_window_expected', 'not_checked')}`",
+        f"- detected_username: `{value(data.windows_cdp, 'detected_username', 'not_checked')}`",
+        f"- account_guard_status: `{value(data.windows_cdp, 'account_guard_status', 'not_checked')}`",
+        f"- persistence_confirmed: `{value(data.windows_cdp, 'persistence_confirmed', 'not_checked')}`",
+        f"- next_step: `{value(data.windows_cdp, 'next_step', 'not_checked')}`",
+        "- mode: dedicated Windows Chrome/Edge profile for ZerroOne only; no cookies are copied from normal browsers.",
         "",
         "## ZerroOne Login Diagnostics",
         f"- report: `{LOGIN_DIAGNOSTICS_REPORT.relative_to(ROOT)}`",
@@ -622,6 +650,7 @@ def write_dashboard() -> None:
         + (
             first_real(
                 "not_checked",
+                value(data.windows_cdp, "detected_username", ""),
                 value(data.account_switch, "detected_username_after", ""),
                 value(data.login_diagnostics, "final_detected_username", ""),
                 value(data.post_phone, "detected_username", ""),
@@ -634,6 +663,7 @@ def write_dashboard() -> None:
         + (
             first_real(
                 "not_checked",
+                value(data.windows_cdp, "account_guard_status", ""),
                 value(data.account_switch, "account_guard_status", ""),
                 value(data.login_diagnostics, "account_guard_status", ""),
                 value(data.post_phone, "account_guard_status", ""),
@@ -642,6 +672,8 @@ def write_dashboard() -> None:
         )
     )
     print(f"login_persistence_confirmed={value(data.login_diagnostics, 'persistence_confirmed', 'not_checked')}")
+    print(f"windows_cdp_connected={value(data.windows_cdp, 'cdp_connected', 'not_checked')}")
+    print(f"windows_cdp_persistence_confirmed={value(data.windows_cdp, 'persistence_confirmed', 'not_checked')}")
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
     print(f"post_phone_verification_detected={value(data.post_phone, 'phone_verification_detected', 'not_checked')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")

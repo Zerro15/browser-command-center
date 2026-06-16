@@ -384,6 +384,55 @@ reports/playwright_gui_diagnostics_report.md
 
 `money:login-zerroone` includes a GUI preflight and stops before opening Kwork if visible Chromium is unavailable.
 
+## Windows Visible Browser CDP Mode
+
+Use this fallback when WSLg/Playwright technically launches Chromium but the window is not visible on the Windows desktop. This mode opens a separate visible Windows Chrome or Edge window and connects Playwright to it through Chrome DevTools Protocol (CDP).
+
+First test with a harmless page:
+
+```bash
+npm run money:win-browser-test
+```
+
+This opens only `https://example.com` in a dedicated Windows browser profile. It does not open Kwork, does not log in, and does not touch cookies.
+
+If the Windows Chrome/Edge test window is visible, use:
+
+```bash
+npm run money:win-login-zerroone
+```
+
+The dedicated Windows profile is under the current Windows user's local app data, for example:
+
+```text
+%LOCALAPPDATA%\KworkMoneyOS\ChromeProfiles\ZerroOne
+```
+
+This is not the user's normal browser profile. Do not copy cookies, local storage, passwords, tokens, or session files from Yandex/Chrome/Edge into it. The script does not read cookies or passwords and does not type login, password, phone, or SMS. The user enters credentials manually in the visible Windows Chrome/Edge window.
+
+After login, check persistence:
+
+```bash
+npm run money:win-check-zerroone
+```
+
+Continue automation only if the local report shows:
+
+```text
+cdp_connected: true
+detected_username: ZerroOne
+account_guard_status: ok
+persistence_confirmed: true
+```
+
+The CDP report is local-only:
+
+```text
+reports/windows_visible_browser_cdp_report.md
+```
+
+Final actions remain manual-only: profile save, publish, moderation, proposal/message send, order actions, withdrawal, phone/SMS, delete, and confirmations.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:
