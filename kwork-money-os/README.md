@@ -246,6 +246,14 @@ Manual account switch helper:
 
 It opens Playwright Chromium with `.browser-profile-zerroone`, prints `detected_username`, leaves the browser open for manual login/switch to `ZerroOne`, then checks again after Enter or the configured wait. Do not save passwords to files, and do not automate account switching.
 
+More explicit login wizard:
+
+```bash
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --login-page --wait-login --hold
+```
+
+Use this when `.browser-profile-zerroone` is not logged in. Log in manually in the opened Playwright Chromium window, not in Yandex Browser. If the detected username is not `ZerroOne`, Account Guard stops automation before profile fill, kwork draft fill, Lead Radar browser scans, or any final action. Credentials, cookies, passwords, phone, and SMS codes are not entered or saved by scripts.
+
 Final actions remain manual-only always: profile save, publish, moderation, proposals, messages, order actions, withdrawal, phone/SMS, delete, and confirmations.
 
 ## Dedicated ZerroOne Browser Profile
@@ -267,10 +275,22 @@ Use `.browser-profile-zerroone` for `ZerroOne` only. Do not copy cookies, sessio
 If `.browser-profile-zerroone` is empty or `login_detected=false`, run:
 
 ```bash
-.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --hold
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --login-page --wait-login --hold
 ```
 
 Log in manually in the opened Chromium window. The scripts do not enter login, password, phone, SMS, or credentials automatically and do not write them to project files. If the detected username is not `ZerroOne`, Account Guard stops profile fill, kwork draft fill, and Lead Radar browser scans.
+
+## How To Login ZerroOne Into Playwright Chromium
+
+Run from `kwork-money-os`:
+
+```bash
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --login-page --wait-login --hold
+```
+
+The wizard opens the dedicated Playwright Chromium profile `.browser-profile-zerroone` and, when needed, opens the Kwork login page. Complete login manually in that Chromium window only. A login in Yandex Browser does not count for Playwright Chromium.
+
+After the manual wait, the wizard checks login and public username up to 12 times. `detected_username=ZerroOne` means `account_guard_status=ok`; any other username or `unknown` stops automation. The script never writes credentials, never types login/password/SMS/phone, and never clicks final buttons.
 
 ## Kwork Account Optimizer + Reply Assistant
 

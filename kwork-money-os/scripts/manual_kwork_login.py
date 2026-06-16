@@ -24,8 +24,9 @@ from browser_rpa_bridge import KWORK_HOME_URL, REPORT_PATH, SCREENSHOT_DIR, Kwor
 SWITCH_REPORT_PATH = REPORTS / "account_switch_report.md"
 KWORK_LOGIN_URL = "https://kwork.ru/login"
 MANUAL_LOGIN_MESSAGE = (
-    "Войди вручную именно в аккаунт ZerroOne в открытом Chromium. "
-    "Не используй Яндекс.Браузер. После входа вернись в терминал и нажми Enter."
+    "ВНИМАНИЕ: войди вручную именно в аккаунт ZerroOne в открытом Chromium. "
+    "Не используй Яндекс.Браузер. Не входи в bogdanmashenin или 3va_Marz. "
+    "После входа вернись в терминал и нажми Enter."
 )
 MANUAL_ONLY = [
     "Switch Kwork account manually in Playwright Chromium.",
@@ -53,6 +54,17 @@ class SwitchSnapshot:
     wrong_profile_backup_path: str = ""
 
 
+@dataclass
+class LoginAttempt:
+    index: int
+    login_detected: str
+    detected_username: str
+    account_guard_status: str
+    account_guard_action: str
+    current_url: str
+    title: str
+
+
 def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> SwitchSnapshot:
     bridge.detect_login_state()
     guard = evaluate_account_guard(bridge.detect_public_username(), expected_username=expected_username)
@@ -74,9 +86,76 @@ def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> Swit
     )
 
 
-def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, report: RpaReport) -> None:
+def page_title(bridge: KworkRpaBridge) -> str:
+    if not bridge.available:
+        return "unknown"
+    try:
+        return str(bridge.page.title() or "unknown").strip()[:180]
+    except Exception:
+        return "unknown"
+
+
+def print_login_attempt(attempt: LoginAttempt, total: int) -> None:
+    print(
+        f"login_wait_attempt={attempt.index}/{total} "
+        f"login_detected={attempt.login_detected} "
+        f"detected_username={attempt.detected_username} "
+        f"account_guard_status={attempt.account_guard_status} "
+        f"url={attempt.current_url} "
+        f"title={attempt.title}"
+    )
+
+
+def wait_for_login_detection(
+    bridge: KworkRpaBridge,
+    expected_username: str,
+    attempts_count: int = 12,
+    delay_seconds: int = 5,
+) -> tuple[SwitchSnapshot, list[LoginAttempt]]:
+    attempts: list[LoginAttempt] = []
+    final_snapshot = snapshot("wait-0", bridge, expected_username)
+    max_attempts = max(1, attempts_count)
+    delay = max(1, delay_seconds)
+    for index in range(1, max_attempts + 1):
+        final_snapshot = snapshot(f"wait-{index}", bridge, expected_username)
+        attempt = LoginAttempt(
+            index=index,
+            login_detected=final_snapshot.login_detected,
+            detected_username=final_snapshot.detected_username,
+            account_guard_status=final_snapshot.account_guard_status,
+            account_guard_action=final_snapshot.account_guard_action,
+            current_url=final_snapshot.current_url,
+            title=page_title(bridge),
+        )
+        attempts.append(attempt)
+        print_login_attempt(attempt, max_attempts)
+        if final_snapshot.account_guard_status == "ok" and final_snapshot.detected_username == expected_username:
+            break
+        if final_snapshot.detected_username not in ("unknown", expected_username):
+            break
+        if index < max_attempts:
+            time.sleep(delay)
+    return final_snapshot, attempts
+
+
+def next_manual_step_for(final: SwitchSnapshot) -> str:
+    if final.account_guard_status == "ok":
+        return "run read-only post-phone readiness/dashboard before any manual final action"
+    if final.detected_username == "unknown":
+        return "finish login in Playwright Chromium profile .browser-profile-zerroone as ZerroOne"
+    return f"switch manually from {final.detected_username} to ZerroOne in Playwright Chromium"
+
+
+def write_switch_report(
+    before: SwitchSnapshot,
+    after: SwitchSnapshot | None,
+    report: RpaReport,
+    login_page_opened: bool = False,
+    attempts: list[LoginAttempt] | None = None,
+) -> None:
     ensure_dir(SWITCH_REPORT_PATH.parent)
     final = after or before
+    attempts = attempts or []
     lines = [
         "# Kwork Account Switch Report",
         "",
@@ -85,8 +164,12 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
         f"- active_browser_profile_path: `{final.active_browser_profile_path}`",
         f"- fallback_browser_profile_path: `{final.fallback_browser_profile_path}`",
         f"- wrong_profile_backup_path: `{final.wrong_profile_backup_path or 'none'}`",
+        f"- login_page_opened: `{str(login_page_opened).lower()}`",
         f"- detected_username_before: `{before.detected_username}`",
         f"- detected_username_after: `{final.detected_username}`",
+        f"- final_detected_username: `{final.detected_username}`",
+        f"- detected_username_attempts: `{', '.join(item.detected_username for item in attempts) or 'not_checked'}`",
+        f"- login_detected: `{final.login_detected}`",
         f"- account_guard_status: `{final.account_guard_status}`",
         f"- account_guard_action: `{final.account_guard_action}`",
         f"- account_guard_message: `{final.account_guard_message}`",
@@ -95,6 +178,16 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
         "- can_continue_profile_setup: `not_checked_in_switch_flow`",
         "- can_continue_kwork_draft: `not_checked_in_switch_flow`",
         f"- screenshots_path: `{SCREENSHOT_DIR.relative_to(ROOT)}`",
+        f"- next_manual_step: `{next_manual_step_for(final)}`",
+        "",
+        "## Detected Username Attempts",
+        *((
+            f"- attempt {item.index}: login_detected=`{item.login_detected}`, "
+            f"detected_username=`{item.detected_username}`, "
+            f"account_guard_status=`{item.account_guard_status}`, "
+            f"url=`{item.current_url}`, title=`{item.title}`"
+        ) for item in attempts),
+        *([] if attempts else ["- not_checked: `wait-login loop was not run`"]),
         "",
         "## Before",
         f"- login_detected: `{before.login_detected}`",
@@ -163,7 +256,7 @@ def wait_for_manual_switch(bridge: KworkRpaBridge, seconds: int, account: str) -
         return
     print_manual_login_banner(account)
     print(
-        "Нужно вручную переключиться на ZerroOne в открытом Chromium. "
+        f"Нужно вручную переключиться на {account} в открытом Chromium. "
         f"Жду {max(1, seconds)} секунд и затем проверю username повторно. "
         "Для ожидания Enter в обычном терминале используйте --wait-seconds 0."
     )
@@ -174,7 +267,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Open Playwright Chromium for manual Kwork login/account switch")
     parser.add_argument("--account", default="ZerroOne", help="Expected Kwork public username; currently intended for ZerroOne")
     parser.add_argument("--hold", action="store_true", help="Keep Chromium open so the user can switch to ZerroOne manually")
+    parser.add_argument("--login-page", action="store_true", help="Open the Kwork login page when the target profile is not logged in")
+    parser.add_argument("--wait-login", action="store_true", help="After the manual wait, poll login/username detection up to 12 times")
     parser.add_argument("--wait-seconds", type=int, default=90, help="Fallback wait when --hold runs without interactive stdin")
+    parser.add_argument("--wait-attempts", type=int, default=12, help="Number of login detection attempts after manual wait")
+    parser.add_argument("--wait-delay-seconds", type=int, default=5, help="Delay between login detection attempts")
     args = parser.parse_args()
 
     config = load_account_guard_config()
@@ -186,11 +283,14 @@ def main() -> None:
         )
     active_path, fallback_path = browser_profile_paths(config)
     report = RpaReport(mode="manual-login", target_url=KWORK_HOME_URL)
+    login_page_opened = False
+    login_attempts: list[LoginAttempt] = []
     with KworkRpaBridge(report) as bridge:
         bridge.open(KWORK_HOME_URL)
         before = snapshot("before", bridge, account)
         if before.login_detected != "true":
             bridge.open(KWORK_LOGIN_URL)
+            login_page_opened = True
             print_manual_login_banner(account)
         elif before.account_guard_status != "ok":
             print(f"Нужно вручную переключиться на {account} в открытом Chromium.")
@@ -199,7 +299,7 @@ def main() -> None:
         )
         bridge.wait_and_screenshot("manual-account-switch-before")
         report.write()
-        write_switch_report(before, None, report)
+        write_switch_report(before, None, report, login_page_opened=login_page_opened)
         print(REPORT_PATH)
         print(SWITCH_REPORT_PATH)
         print(f"active_browser_profile_path={active_path}")
@@ -208,10 +308,24 @@ def main() -> None:
         after = None
         if args.hold:
             wait_for_manual_switch(bridge, args.wait_seconds, account)
-            after = snapshot("after", bridge, account)
+            if args.wait_login:
+                after, login_attempts = wait_for_login_detection(
+                    bridge,
+                    account,
+                    attempts_count=args.wait_attempts,
+                    delay_seconds=args.wait_delay_seconds,
+                )
+            else:
+                after = snapshot("after", bridge, account)
             bridge.wait_and_screenshot("manual-account-switch-after")
             report.write()
-            write_switch_report(before, after, report)
+            write_switch_report(
+                before,
+                after,
+                report,
+                login_page_opened=login_page_opened,
+                attempts=login_attempts,
+            )
             print_guard_state("after_hold", report)
         if after and after.account_guard_status == "ok":
             print("account_switch_ready=true")
