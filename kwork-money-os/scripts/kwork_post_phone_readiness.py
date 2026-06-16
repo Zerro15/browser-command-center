@@ -20,6 +20,7 @@ from browser_rpa_bridge import (
     KworkRpaBridge,
     RpaReport,
 )
+from browser_session import open_kwork_browser_session
 
 
 EXPECTED_REPO_ROOT = Path("/home/zerro/projects/browser-command-center")
@@ -53,6 +54,11 @@ class PageCheck:
 @dataclass
 class ReadinessStatus:
     git_commit: str = ""
+    browser_mode: str = "wsl_playwright"
+    cdp_connected: str = "not_checked"
+    windows_cdp_user_data_dir: str = "not_checked"
+    windows_cdp_port: str = "not_checked"
+    windows_cdp_final_url: str = "not_checked"
     login_detected: str = "unknown"
     username: str = "unknown"
     active_browser_profile_path: str = ""
@@ -178,6 +184,11 @@ def write_report(status: ReadinessStatus) -> None:
         "",
         f"- generated_at: `{datetime.now().isoformat(timespec='seconds')}`",
         f"- git_commit: `{status.git_commit}`",
+        f"- browser_mode: `{status.browser_mode}`",
+        f"- cdp_connected: `{status.cdp_connected}`",
+        f"- windows_cdp_user_data_dir: `{status.windows_cdp_user_data_dir}`",
+        f"- windows_cdp_port: `{status.windows_cdp_port}`",
+        f"- windows_cdp_final_url: `{status.windows_cdp_final_url}`",
         f"- login_detected: `{status.login_detected}`",
         f"- username: `{status.username}`",
         f"- active_browser_profile_path: `{status.active_browser_profile_path or 'unknown'}`",
@@ -227,6 +238,124 @@ def write_report(status: ReadinessStatus) -> None:
         ]
     )
     REPORT_PATH.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def page_has_kwork_form_cdp(session) -> bool:
+    try:
+        data = session.page.evaluate(
+            """() => {
+              const text = document.body ? document.body.innerText : '';
+              const fields = Array.from(document.querySelectorAll('input, textarea, select, [contenteditable="true"]'))
+                .filter((el) => {
+                  const rect = el.getBoundingClientRect();
+                  const style = getComputedStyle(el);
+                  return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+                }).length;
+              return {text, fields};
+            }"""
+        )
+    except Exception:
+        return False
+    text = str(data.get("text") or "")
+    field_count = int(data.get("fields") or 0)
+    if PHONE_VERIFICATION_RE.search(text):
+        return False
+    return field_count > 0 and bool(re.search(r"кворк|назван|описан|стоим|рубри", text, re.I))
+
+
+def check_page_cdp(session, name: str, url: str) -> PageCheck:
+    item = PageCheck(name=name, url=url)
+    session.open(url)
+    diag = session.refresh_diagnostics()
+    item.final_url = diag.current_url
+    item.title = diag.page_title[:160]
+    item.login_detected = diag.login_detected
+    item.phone_verification_detected = bool(
+        "new_phone_verify=1" in item.final_url or PHONE_VERIFICATION_RE.search(session.visible_text())
+    )
+    if name == "create_kwork":
+        item.accessible = bool(item.login_detected == "true" and not item.phone_verification_detected and page_has_kwork_form_cdp(session))
+    elif name == "profile_settings":
+        item.accessible = bool(item.login_detected == "true" and not item.phone_verification_detected)
+    elif name == "seller_profile":
+        item.accessible = bool(not item.phone_verification_detected and "404" not in item.title.lower())
+    else:
+        item.accessible = bool(item.login_detected == "true" and not item.phone_verification_detected)
+    blocked = session.find_blocked_buttons()
+    if blocked:
+        item.warnings.append(f"blocked final/action buttons visible and not clicked: {', '.join(blocked)}")
+    session.screenshot(f"post-phone-cdp-{name}")
+    return item
+
+
+def run_preview_cdp(hold: bool) -> ReadinessStatus:
+    status = ReadinessStatus(git_commit=validate_root(), browser_mode="windows_cdp")
+    with open_kwork_browser_session(mode="windows_cdp", account=EXPECTED_USERNAME, start_url=KWORK_HOME_URL) as session:
+        checks = [
+            ("home", KWORK_HOME_URL),
+            ("profile_settings", PROFILE_SETTINGS_URL),
+            ("seller_profile", SELLER_PROFILE_URL),
+            ("create_kwork", DEFAULT_DRAFT_URL),
+        ]
+        for name, url in checks:
+            item = check_page_cdp(session, name, url)
+            status.pages.append(item)
+            status.phone_verification_detected = status.phone_verification_detected or item.phone_verification_detected
+        diag = session.refresh_diagnostics()
+        guard = session.evaluate_guard()
+        status.cdp_connected = str(diag.cdp_connected).lower()
+        status.windows_cdp_user_data_dir = diag.user_data_dir
+        status.windows_cdp_port = str(diag.remote_debugging_port)
+        status.windows_cdp_final_url = diag.current_url
+        status.login_detected = diag.login_detected
+        status.username = guard.detected_username
+        status.active_browser_profile_path = diag.user_data_dir
+        status.fallback_browser_profile_path = "not_used_in_windows_cdp"
+        status.detected_username = guard.detected_username
+        status.expected_username = guard.expected_username
+        status.allowed_usernames = ", ".join(guard.allowed_usernames)
+        status.account_guard_status = guard.account_guard_status
+        status.account_guard_action = guard.account_guard_action
+        status.account_guard_message = guard.account_guard_message
+        if not guard.ok:
+            status.warnings.append(guard.account_guard_message)
+        status.screenshots = list(diag.screenshots)
+        status.warnings.extend(diag.warnings)
+        by_name = {item.name: item for item in status.pages}
+        status.create_kwork_accessible = by_name.get("create_kwork", PageCheck("", "")).accessible
+        status.seller_profile_accessible = by_name.get("seller_profile", PageCheck("", "")).accessible
+        account_guard_ok = guard.ok
+        status.can_continue_profile_setup = (
+            by_name.get("profile_settings", PageCheck("", "")).accessible
+            and not status.phone_verification_detected
+            and account_guard_ok
+        )
+        status.can_continue_kwork_draft = status.create_kwork_accessible and not status.phone_verification_detected and account_guard_ok
+        status.profile_ready_to_save_manually = status.can_continue_profile_setup
+        status.kwork_draft_ready_to_continue = status.can_continue_kwork_draft
+        write_report(status)
+        if hold:
+            print("Read-only CDP readiness complete. Browser stays under user control; press Enter to finish this script.")
+            try:
+                input()
+            except EOFError:
+                pass
+    print(REPORT_PATH)
+    print(f"browser_mode={status.browser_mode}")
+    print(f"cdp_connected={status.cdp_connected}")
+    print(f"windows_cdp_user_data_dir={status.windows_cdp_user_data_dir}")
+    print(f"windows_cdp_port={status.windows_cdp_port}")
+    print(f"login_detected={status.login_detected}")
+    print(f"detected_username={status.detected_username}")
+    print(f"expected_username={status.expected_username}")
+    print(f"account_guard_status={status.account_guard_status}")
+    print(f"account_guard_action={status.account_guard_action}")
+    print(f"phone_verification_detected={str(status.phone_verification_detected).lower()}")
+    print(f"create_kwork_accessible={str(status.create_kwork_accessible).lower()}")
+    print(f"seller_profile_accessible={str(status.seller_profile_accessible).lower()}")
+    print(f"can_continue_profile_setup={str(status.can_continue_profile_setup).lower()}")
+    print(f"can_continue_kwork_draft={str(status.can_continue_kwork_draft).lower()}")
+    return status
 
 
 def run_preview(hold: bool) -> ReadinessStatus:
@@ -291,6 +420,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--preview", action="store_true")
     parser.add_argument("--hold", action="store_true")
+    parser.add_argument("--browser-mode", choices=["wsl_playwright", "windows_cdp"], default="wsl_playwright")
     return parser.parse_args()
 
 
@@ -298,7 +428,10 @@ def main() -> None:
     args = parse_args()
     if not args.preview:
         raise SystemExit("Use --preview for the read-only post-phone readiness check.")
-    run_preview(args.hold)
+    if args.browser_mode == "windows_cdp":
+        run_preview_cdp(args.hold)
+    else:
+        run_preview(args.hold)
 
 
 if __name__ == "__main__":

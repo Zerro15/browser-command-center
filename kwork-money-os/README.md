@@ -433,6 +433,63 @@ reports/windows_visible_browser_cdp_report.md
 
 Final actions remain manual-only: profile save, publish, moderation, proposal/message send, order actions, withdrawal, phone/SMS, delete, and confirmations.
 
+## Windows CDP Production Browser Mode
+
+Use Windows CDP as the primary browser backend after `money:win-login-zerroone` succeeds. This mode uses the dedicated visible Windows Chrome/Edge profile:
+
+```text
+%LOCALAPPDATA%\KworkMoneyOS\ChromeProfiles\ZerroOne
+```
+
+It does not use Yandex Browser, does not use the normal Chrome/Edge profile, does not copy cookies, and does not read credentials, local storage, passwords, or tokens. The legacy WSL profile `.browser-profile-zerroone` can still exist, but when `browser_mode=windows_cdp` it is diagnostic only and should not block ZerroOne work.
+
+Check the dedicated Windows profile:
+
+```bash
+npm run money:win-check-zerroone
+```
+
+Run read-only post-phone readiness through Windows CDP:
+
+```bash
+npm run money:post-phone-cdp
+```
+
+Preview the profile and first-kwork pages without filling or saving:
+
+```bash
+npm run money:profile-preview-cdp
+npm run money:kwork-preview-cdp
+```
+
+Read-only lead entrypoints:
+
+```bash
+npm run money:lead-radar-cdp
+npm run money:daily-leads-cdp
+```
+
+Continue only when reports show:
+
+```text
+browser_mode: windows_cdp
+cdp_connected: true
+login_detected: true
+detected_username: ZerroOne
+account_guard_status: ok
+```
+
+The CDP preview reports are local-only:
+
+```text
+reports/post_phone_readiness_report.md
+reports/cdp_preview_report.md
+reports/operator_dashboard.md
+reports/operator_dashboard.html
+```
+
+Even in Windows CDP mode, final actions remain manual-only: profile save, publish, moderation, proposal/message send, order actions, withdrawal, phone/SMS, delete, and confirmations.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:

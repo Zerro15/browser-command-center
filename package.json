@@ -30,6 +30,13 @@
     "money:win-browser-test": "cd kwork-money-os && .venv/bin/python scripts/windows_visible_browser_cdp.py --open-test --hold",
     "money:win-login-zerroone": "cd kwork-money-os && .venv/bin/python scripts/windows_visible_browser_cdp.py --login-zerroone --hold",
     "money:win-check-zerroone": "cd kwork-money-os && .venv/bin/python scripts/windows_visible_browser_cdp.py --check-zerroone",
+    "money:post-phone-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_post_phone_readiness.py --preview --browser-mode windows_cdp",
+    "money:profile-preview-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_cdp_preview.py --target profile",
+    "money:profile-fill-cdp": "cd kwork-money-os && echo 'profile fill over Windows CDP requires a separate explicit confirmation; run preview first' && .venv/bin/python scripts/kwork_cdp_preview.py --target profile",
+    "money:kwork-preview-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_cdp_preview.py --target kwork",
+    "money:kwork-fill-cdp": "cd kwork-money-os && echo 'kwork fill over Windows CDP requires a separate explicit confirmation; run preview first' && .venv/bin/python scripts/kwork_cdp_preview.py --target kwork",
+    "money:lead-radar-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_cdp_preview.py --target lead-radar",
+    "money:daily-leads-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_cdp_preview.py --target daily-leads",
     "money:order-executor": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_order_executor.py",
     "money:post-phone": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_post_phone_readiness.py",
     "money:check-private": "kwork-money-os/.venv/bin/python kwork-money-os/scripts/check_private_leaks.py"
