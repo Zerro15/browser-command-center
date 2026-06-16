@@ -13,6 +13,7 @@ data/offers/optimized/
 !data/offers/optimized/
 data/offers/optimized/*
 !data/offers/optimized/example_offer.json
+data/orders/prepared/
 reports/screenshots/
 reports/*.png
 reports/*.json
@@ -25,6 +26,7 @@ reports/account_money_plan.md
 reports/reply_drafts.md
 reports/autopilot_report.md
 reports/browser_fill_report.md
+reports/order_executor_report.md
 *.cookies.json
 *.state.json
 

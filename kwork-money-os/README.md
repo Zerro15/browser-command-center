@@ -379,6 +379,31 @@ The JSON drafts include titles, descriptions, packages, prices, delivery times, 
 
 `reports/offer_factory_report.md` is a local-only report with recommended publishing order, risk, complexity, approximate margin, and readiness notes. Do not commit runtime reports. Publishing, moderation, profile save, `Опубликовать`, `На модерацию`, phone/SMS, withdrawal, proposals, and messages remain manual-only final actions.
 
+Kwork Order Executor:
+
+```bash
+npm run money:order-executor -- --dry-run
+npm run money:order-executor -- --from-best-lead --build
+npm run money:order-executor -- --offer data/offers/factory/telegram_leads_bot.json --build
+```
+
+From inside `kwork-money-os`, the same tool can be run directly:
+
+```bash
+.venv/bin/python scripts/kwork_order_executor.py --dry-run
+.venv/bin/python scripts/kwork_order_executor.py --from-best-lead --build
+.venv/bin/python scripts/kwork_order_executor.py --offer data/offers/factory/telegram_leads_bot.json --build
+```
+
+Order Executor is an offline preparation tool. It does not open Kwork, accept orders, send messages, send proposals, publish kworks, save the profile, or touch phone/SMS/withdrawal actions. It creates a local workspace under:
+
+```text
+data/orders/prepared/
+reports/order_executor_report.md
+```
+
+Use it after a future order is manually discussed/accepted. It prepares questions, scope limits, tech plan, task checklist, acceptance criteria, handoff draft, risk notes, `.env.example`, and a `project/` starter area. Real tokens, passwords, cookies, screenshots, sessions, and client private data must stay out of Git. `data/orders/prepared/` and `reports/order_executor_report.md` are ignored/local-only.
+
 Kwork Operator Dashboard:
 
 ```bash
@@ -386,7 +411,7 @@ npm run money:dashboard
 .venv/bin/python scripts/kwork_operator_dashboard.py --build
 ```
 
-The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, Offer Factory, and manual-only checklist into:
+The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, Offer Factory, Order Executor status, and manual-only checklist into:
 
 ```text
 reports/operator_dashboard.md

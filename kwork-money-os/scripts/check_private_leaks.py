@@ -48,6 +48,7 @@ FORBIDDEN_RULES = [
     Rule("operator dashboard report", "kwork-money-os/reports/operator_dashboard.md"),
     Rule("operator dashboard html", "kwork-money-os/reports/operator_dashboard.html"),
     Rule("offer factory report", "kwork-money-os/reports/offer_factory_report.md"),
+    Rule("order executor report", "kwork-money-os/reports/order_executor_report.md"),
     Rule("pre-phone setup report", "kwork-money-os/reports/pre_phone_setup_report.md"),
     Rule("autopilot report", "kwork-money-os/reports/autopilot_report.md"),
     Rule("browser fill report", "kwork-money-os/reports/browser_fill_report.md"),
@@ -56,6 +57,7 @@ FORBIDDEN_RULES = [
     Rule("best lead proposal", "kwork-money-os/data/leads/best_lead_of_day_proposal.md"),
     Rule("lead radar data", "kwork-money-os/data/leads/"),
     Rule("best lead delivery kit", "kwork-money-os/data/delivery/best_lead_yandex_direct_sheets/"),
+    Rule("prepared order workspaces", "kwork-money-os/data/orders/prepared/"),
     Rule("reply data", "kwork-money-os/data/replies/"),
     Rule("private data", "kwork-money-os/data/private/"),
 ]

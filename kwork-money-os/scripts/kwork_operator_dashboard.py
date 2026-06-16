@@ -35,6 +35,8 @@ PORTFOLIO_INDEX = PORTFOLIO_DIR / "portfolio_index.md"
 PORTFOLIO_CHECKLIST = PORTFOLIO_DIR / "portfolio_upload_checklist.md"
 OFFER_FACTORY_DIR = DATA / "offers" / "factory"
 OFFER_FACTORY_REPORT = REPORTS / "offer_factory_report.md"
+ORDER_EXECUTOR_REPORT = REPORTS / "order_executor_report.md"
+PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
     "google_sheets_automation.json",
@@ -70,6 +72,9 @@ class DashboardData:
     portfolio_checklist: list[str]
     offer_factory: list[str]
     recommended_first_offer: str
+    order_executor_status: str
+    latest_order_workspace: str
+    order_executor_checklist: list[str]
     git_commit: str
 
 
@@ -222,6 +227,31 @@ def load_offer_factory() -> tuple[list[str], str]:
     return items, recommended_first
 
 
+def latest_prepared_order_workspace() -> str:
+    if not PREPARED_ORDERS_DIR.exists():
+        return ""
+    workspaces = sorted(
+        (path for path in PREPARED_ORDERS_DIR.iterdir() if path.is_dir()),
+        key=lambda path: path.stat().st_mtime,
+    )
+    if not workspaces:
+        return ""
+    return str(workspaces[-1].relative_to(ROOT))
+
+
+def order_executor_status() -> tuple[str, str, list[str]]:
+    workspace = latest_prepared_order_workspace()
+    status = "ready" if workspace and ORDER_EXECUTOR_REPORT.exists() else "not_built"
+    checklist = [
+        "Confirm the Kwork order manually before starting paid work.",
+        "Agree scope, price, deadline, and acceptance criteria manually.",
+        "Ask only for client-created API tokens/accesses; never ask for passwords.",
+        "Keep real `.env`, tokens, cookies, screenshots, and client data out of git.",
+        "Send handoff/messages manually only when allowed.",
+    ]
+    return status, workspace or "none", checklist
+
+
 def collect_data() -> DashboardData:
     git_commit = validate_root()
     daily_text = read_text(DAILY_REPORT)
@@ -232,6 +262,7 @@ def collect_data() -> DashboardData:
     portfolio_index = read_text(PORTFOLIO_INDEX)
     portfolio_checklist = read_text(PORTFOLIO_CHECKLIST)
     offer_factory, recommended_first_offer = load_offer_factory()
+    order_status, latest_workspace, order_checklist = order_executor_status()
     proposal, price, deadline, questions = parse_proposal(proposal_text_raw)
     delivery_files = sorted(path.name for path in DELIVERY_KIT.glob("*") if path.is_file()) if DELIVERY_KIT.exists() else []
     return DashboardData(
@@ -250,6 +281,9 @@ def collect_data() -> DashboardData:
         portfolio_checklist=parse_numbered_items(portfolio_checklist, limit=8),
         offer_factory=offer_factory,
         recommended_first_offer=recommended_first_offer,
+        order_executor_status=order_status,
+        latest_order_workspace=latest_workspace,
+        order_executor_checklist=order_checklist,
         git_commit=git_commit,
     )
 
@@ -274,6 +308,7 @@ def build_markdown(data: DashboardData) -> str:
         f"- best_lead_of_day: {best_title}",
         f"- portfolio_pack_status: `ready ({len(data.portfolio_cases)} demo cases)`",
         f"- offer_factory_status: `ready ({len(data.offer_factory)} offers)`",
+        f"- order_executor_status: `{data.order_executor_status}`",
         "",
         "## Best Lead",
         f"- title: {best_title}",
@@ -342,6 +377,15 @@ def build_markdown(data: DashboardData) -> str:
         "",
         "### Factory Offers",
         *(f"- {item}" for item in data.offer_factory),
+        "",
+        "## Order Executor",
+        f"- status: `{data.order_executor_status}`",
+        f"- latest_prepared_workspace: `{data.latest_order_workspace}`",
+        f"- report: `{ORDER_EXECUTOR_REPORT.relative_to(ROOT)}`",
+        "- mode: offline-only workspace generator; it does not accept orders or send messages.",
+        "",
+        "### After Getting An Order",
+        *(f"- {item}" for item in data.order_executor_checklist),
         "",
         "## Manual-Only Checklist",
         *(f"- {item}" for item in MANUAL_ONLY),
@@ -428,6 +472,8 @@ def write_dashboard() -> None:
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")
     print(f"offer_factory_count={len(data.offer_factory)}")
+    print(f"order_executor_status={data.order_executor_status}")
+    print(f"latest_order_workspace={data.latest_order_workspace}")
     print("sent=false")
 
 
