@@ -17,6 +17,7 @@ reports/screenshots/
 reports/*.png
 reports/*.json
 reports/*.md
+reports/*.html
 !reports/*.example.md
 reports/account_audit.md
 reports/kwork_offers_audit.md

@@ -346,6 +346,22 @@ data/leads/best_lead_of_day_proposal.md
 
 These files are local-only. The proposal is not sent automatically. Sending proposals remains manual-only after phone verification is completed manually; do not automate `Предложить услугу`, `Отправить`, messages, phone/SMS, withdrawal, publication, moderation, or order actions.
 
+Kwork Operator Dashboard:
+
+```bash
+npm run money:dashboard
+.venv/bin/python scripts/kwork_operator_dashboard.py --build
+```
+
+The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, and manual-only checklist into:
+
+```text
+reports/operator_dashboard.md
+reports/operator_dashboard.html
+```
+
+The dashboard is for manual work after phone verification. It does not open Kwork, send proposals, click `Предложить услугу`, publish, moderate, save profile, handle phone/SMS, or touch withdrawal/order actions. `reports/operator_dashboard.*` are ignored/local-only and must not be committed.
+
 New outputs:
 
 ```text
@@ -358,6 +374,8 @@ reports/lead_shortlist.md
 reports/top_5_proposals.md
 reports/daily_lead_pipeline_report.md
 reports/best_lead_of_day.md
+reports/operator_dashboard.md
+reports/operator_dashboard.html
 data/profile/profile_optimized.json
 data/leads/
 data/offers/optimized/
@@ -376,6 +394,8 @@ Do not push:
 - `reports/top_5_proposals.md`;
 - `reports/daily_lead_pipeline_report.md`;
 - `reports/best_lead_of_day.md`;
+- `reports/operator_dashboard.md`;
+- `reports/operator_dashboard.html`;
 - `reports/reply_drafts.md`;
 - `reports/autopilot_report.md`;
 - `reports/browser_fill_report.md`;
