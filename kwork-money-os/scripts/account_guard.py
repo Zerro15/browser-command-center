@@ -76,6 +76,15 @@ def _as_list(value: Any, fallback: Sequence[str]) -> list[str]:
     return [item for item in normalized if item != "unknown"] or [normalize_username(item) for item in fallback]
 
 
+def canonical_allowed_username(username: str, allowed: Sequence[str]) -> str:
+    normalized = normalize_username(username)
+    for item in allowed:
+        candidate = normalize_username(item)
+        if candidate != "unknown" and candidate.lower() == normalized.lower():
+            return candidate
+    return normalized
+
+
 def normalize_profile_path_value(value: Any, fallback: str) -> str:
     raw = "" if value is None else str(value).strip().strip("\"'")
     if not raw:
@@ -171,6 +180,7 @@ def evaluate_account_guard(
     detected_username: Any,
     expected_username: str | None = None,
     allowed_usernames: Sequence[str] | None = None,
+    login_detected: Any = None,
 ) -> AccountGuardResult:
     config = load_account_guard_config()
     expected = normalize_username(expected_username or config.expected_username)
@@ -181,7 +191,21 @@ def evaluate_account_guard(
         allowed.insert(0, expected)
 
     detected = normalize_username(detected_username)
+    if detected != "unknown":
+        detected = canonical_allowed_username(detected, allowed)
     if detected == "unknown":
+        if str(login_detected).lower() == "true":
+            return AccountGuardResult(
+                detected_username=detected,
+                expected_username=expected,
+                allowed_usernames=allowed,
+                account_guard_status="unknown_logged_in",
+                account_guard_action="stop",
+                account_guard_message=(
+                    "Kwork login is detected, but the public username is not visible. "
+                    f"Open https://kwork.ru/user/{expected} in Playwright Chromium and rerun diagnostics."
+                ),
+            )
         return AccountGuardResult(
             detected_username=detected,
             expected_username=expected,
@@ -191,6 +215,18 @@ def evaluate_account_guard(
             account_guard_message=(
                 f"Could not detect public Kwork username. Switch manually to {expected} in Playwright Chromium "
                 "and rerun the safe check."
+            ),
+        )
+    if detected == expected and str(login_detected).lower() == "false":
+        return AccountGuardResult(
+            detected_username=detected,
+            expected_username=expected,
+            allowed_usernames=allowed,
+            account_guard_status="profile_page_match",
+            account_guard_action="stop",
+            account_guard_message=(
+                f"Opened public profile page for {expected}, but Kwork login is not confirmed. "
+                "Finish login in Playwright Chromium and verify the account menu/current session."
             ),
         )
     if detected not in allowed:

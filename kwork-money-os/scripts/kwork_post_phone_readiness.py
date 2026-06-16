@@ -12,7 +12,7 @@ from pathlib import Path
 
 from _common import REPORTS, ROOT, ensure_dir
 from account_optimizer_common import PROFILE_SETTINGS_URL, SELLER_PROFILE_URL
-from account_guard import apply_account_guard_to_report, evaluate_account_guard
+from account_guard import apply_account_guard_to_report, evaluate_account_guard, load_account_guard_config
 from browser_rpa_bridge import (
     DEFAULT_DRAFT_URL,
     KWORK_HOME_URL,
@@ -97,7 +97,12 @@ def validate_root() -> str:
 
 
 def apply_guard(status: ReadinessStatus, bridge: KworkRpaBridge) -> None:
-    result = evaluate_account_guard(bridge.detect_public_username())
+    config = load_account_guard_config()
+    result = evaluate_account_guard(
+        bridge.detect_public_username(config.expected_username),
+        expected_username=config.expected_username,
+        login_detected=bridge.report.login_detected,
+    )
     apply_account_guard_to_report(bridge.report, result)
     status.username = result.detected_username
     status.active_browser_profile_path = bridge.report.active_browser_profile_path

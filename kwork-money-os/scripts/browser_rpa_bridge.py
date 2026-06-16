@@ -233,7 +233,12 @@ def import_playwright(report: RpaReport):
 
 
 class KworkRpaBridge:
-    def __init__(self, report: RpaReport, selectors: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        report: RpaReport,
+        selectors: dict[str, Any] | None = None,
+        profile_dir: Path | None = None,
+    ):
         self.report = report
         self.selectors = selectors or load_selectors()
         self.sync_playwright = None
@@ -243,6 +248,8 @@ class KworkRpaBridge:
         self.page = None
         self.stopped = False
         self.profile_dir, self.fallback_profile_dir = browser_profile_paths()
+        if profile_dir is not None:
+            self.profile_dir = Path(profile_dir).resolve()
         self.report.active_browser_profile_path = str(self.profile_dir)
         self.report.fallback_browser_profile_path = str(self.fallback_profile_dir)
 
@@ -253,7 +260,9 @@ class KworkRpaBridge:
         self.sync_playwright = sync_playwright
         self.timeout_error = timeout_error
         self.playwright = sync_playwright().start()
-        self.profile_dir, self.fallback_profile_dir = browser_profile_paths()
+        configured_profile, self.fallback_profile_dir = browser_profile_paths()
+        if self.profile_dir == configured_profile or not self.profile_dir:
+            self.profile_dir = configured_profile
         self.report.active_browser_profile_path = str(self.profile_dir)
         self.report.fallback_browser_profile_path = str(self.fallback_profile_dir)
         ensure_dir(self.profile_dir)
@@ -426,23 +435,26 @@ class KworkRpaBridge:
             self.report.login_detected = "unknown"
             return None
 
-    def detect_public_username(self) -> str:
-        """Detect only a public Kwork username from URL/profile links.
-
-        This helper deliberately avoids private browser state: no cookies,
-        tokens, storage, email fields, passwords, or session data are read.
-        """
+    def collect_public_username_signals(self, expected_username: str | None = None) -> dict[str, Any]:
+        """Collect public username signals without reading private browser state."""
         if not self.available:
-            self.report.detected_username = "unknown"
-            return "unknown"
-        if self.report.login_detected != "true":
-            self.report.detected_username = "unknown"
-            return "unknown"
+            return {
+                "current_url": "unknown",
+                "title": "unknown",
+                "is_login_page": None,
+                "is_404": None,
+                "current_profile_username": "unknown",
+                "header_candidates": [],
+                "visible_link_candidates": [],
+                "text_expected_mentions": False,
+                "seller_title_expected": False,
+            }
         try:
             from account_guard import normalize_username
 
+            expected = normalize_username(expected_username)
             data = self.page.evaluate(
-                """() => {
+                """(expected) => {
                   const visible = (el) => {
                     const rect = el.getBoundingClientRect();
                     const style = getComputedStyle(el);
@@ -461,6 +473,8 @@ class KworkRpaBridge:
                     .filter(visible)
                     .map((link) => usernameFromHref(link.href || link.getAttribute('href') || ''))
                     .filter(Boolean);
+                  const text = document.body ? document.body.innerText : '';
+                  const title = document.title || '';
                   const current = (location.pathname.match(/^\\/user\\/([^/?#]+)/) || [])[1] || '';
                   const headerCandidates = collect([
                     'header a[href*="/user/"]',
@@ -468,26 +482,102 @@ class KworkRpaBridge:
                     '[class*="header"] a[href*="/user/"]',
                     '[class*="top"] a[href*="/user/"]',
                     '[class*="user-menu"] a[href*="/user/"]',
-                    '[class*="profile"] a[href*="/user/"]'
+                    '[class*="profile"] a[href*="/user/"]',
+                    '[class*="avatar"] a[href*="/user/"]'
                   ].join(','));
                   const visibleCandidates = collect('a[href*="/user/"]');
-                  return {current, headerCandidates, visibleCandidates};
-                }"""
+                  const escaped = expected ? expected.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') : '';
+                  const expectedRe = escaped ? new RegExp('(^|\\\\b|@)' + escaped + '(\\\\b|$)', 'i') : null;
+                  return {
+                    current_url: location.href,
+                    title,
+                    current,
+                    headerCandidates,
+                    visibleCandidates,
+                    isLoginPage: /\\/login|\\/signin/i.test(location.pathname) || /Вход|Регистрация|Зарегистрироваться/i.test(title),
+                    is404: /404|страница не найдена|page not found/i.test(title + '\\n' + text),
+                    textExpectedMentions: expectedRe ? expectedRe.test(text) : false,
+                    sellerTitleExpected: expectedRe ? expectedRe.test(title) : false
+                  };
+                }""",
+                expected,
             )
         except Exception as error:
-            self.report.warn(f"Unable to detect public username: {error}")
+            self.report.warn(f"Unable to collect public username signals: {error}")
+            return {
+                "current_url": self.page.url if self.available else "unknown",
+                "title": "unknown",
+                "is_login_page": None,
+                "is_404": None,
+                "current_profile_username": "unknown",
+                "header_candidates": [],
+                "visible_link_candidates": [],
+                "text_expected_mentions": False,
+                "seller_title_expected": False,
+            }
+
+        def normalized_list(values: Any) -> list[str]:
+            result: list[str] = []
+            for raw in values or []:
+                username = normalize_username(raw)
+                if username != "unknown" and username not in result:
+                    result.append(username)
+            return result
+
+        return {
+            "current_url": str(data.get("current_url") or self.page.url),
+            "title": str(data.get("title") or "unknown")[:180],
+            "is_login_page": bool(data.get("isLoginPage")),
+            "is_404": bool(data.get("is404")),
+            "current_profile_username": normalize_username(data.get("current")),
+            "header_candidates": normalized_list(data.get("headerCandidates")),
+            "visible_link_candidates": normalized_list(data.get("visibleCandidates")),
+            "text_expected_mentions": bool(data.get("textExpectedMentions")),
+            "seller_title_expected": bool(data.get("sellerTitleExpected")),
+        }
+
+    def detect_public_username(self, expected_username: str | None = None) -> str:
+        """Detect only a public Kwork username from URL/profile links.
+
+        This helper deliberately avoids private browser state: no cookies,
+        tokens, storage, email fields, passwords, or session data are read.
+        """
+        if not self.available:
+            self.report.detected_username = "unknown"
+            return "unknown"
+        try:
+            from account_guard import normalize_username
+        except Exception as error:
+            self.report.warn(f"Unable to load username normalizer: {error}")
             self.report.detected_username = "unknown"
             return "unknown"
 
+        signals = self.collect_public_username_signals(expected_username)
         candidates: list[str] = []
-        for key in ("headerCandidates", "visibleCandidates"):
-            for raw in data.get(key) or []:
-                username = normalize_username(raw)
-                if username != "unknown" and username not in candidates:
-                    candidates.append(username)
-        current = normalize_username(data.get("current"))
+        current = normalize_username(signals.get("current_profile_username"))
+        expected = normalize_username(expected_username)
+        on_expected_profile = (
+            expected != "unknown"
+            and current == expected
+            and not signals.get("is_login_page")
+            and not signals.get("is_404")
+        )
+        if self.report.login_detected != "true":
+            detected = expected if on_expected_profile else "unknown"
+            self.report.detected_username = detected
+            return detected
+
+        for username in signals.get("header_candidates") or []:
+            if username != "unknown" and username not in candidates:
+                candidates.append(username)
         if current != "unknown" and current not in candidates:
             candidates.append(current)
+        if on_expected_profile and expected not in candidates:
+            candidates.insert(0, expected)
+        elif expected != "unknown" and (
+            signals.get("seller_title_expected") or signals.get("text_expected_mentions")
+        ) and not signals.get("is_login_page") and not signals.get("is_404"):
+            candidates.append(expected)
         detected = candidates[0] if candidates else "unknown"
         self.report.detected_username = detected
         return detected

@@ -127,7 +127,10 @@ def run_filler(args: argparse.Namespace) -> None:
                 bridge.hold_open()
             print(REPORT_PATH)
             return
-        guard = evaluate_account_guard(bridge.detect_public_username())
+        guard = evaluate_account_guard(
+            bridge.detect_public_username(),
+            login_detected=bridge.report.login_detected,
+        )
         apply_account_guard_to_report(report, guard)
         if not guard.ok:
             report.warn(guard.account_guard_message)

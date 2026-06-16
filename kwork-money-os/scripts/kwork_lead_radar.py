@@ -490,7 +490,10 @@ def scan_projects(status: RadarStatus, mode: str) -> list[LeadRecord]:
                 bridge.hold_open()
             return []
 
-        guard = evaluate_account_guard(bridge.detect_public_username())
+        guard = evaluate_account_guard(
+            bridge.detect_public_username(),
+            login_detected=bridge.report.login_detected,
+        )
         apply_account_guard_to_report(report, guard)
         status.detected_username = guard.detected_username
         status.expected_username = guard.expected_username

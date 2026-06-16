@@ -69,7 +69,11 @@ class LoginAttempt:
 
 def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> SwitchSnapshot:
     bridge.detect_login_state()
-    guard = evaluate_account_guard(bridge.detect_public_username(), expected_username=expected_username)
+    guard = evaluate_account_guard(
+        bridge.detect_public_username(expected_username),
+        expected_username=expected_username,
+        login_detected=bridge.report.login_detected,
+    )
     apply_account_guard_to_report(bridge.report, guard)
     phone_detected = bridge.detect_phone_verification_required(f"manual-switch-phone-stop-{label}")
     return SwitchSnapshot(
@@ -119,6 +123,7 @@ def wait_for_login_detection(
     max_attempts = max(1, attempts_count)
     delay = max(1, delay_seconds)
     for index in range(1, max_attempts + 1):
+        bridge.open(f"https://kwork.ru/user/{expected_username}")
         final_snapshot = snapshot(f"wait-{index}", bridge, expected_username)
         attempt = LoginAttempt(
             index=index,
@@ -271,6 +276,7 @@ def main() -> None:
     parser.add_argument("--hold", action="store_true", help="Keep Chromium open so the user can switch to ZerroOne manually")
     parser.add_argument("--login-page", action="store_true", help="Open the Kwork login page when the target profile is not logged in")
     parser.add_argument("--wait-login", action="store_true", help="After the manual wait, poll login/username detection up to 12 times")
+    parser.add_argument("--diagnose", action="store_true", help="Run login diagnostics/restart check after the manual wait loop")
     parser.add_argument("--wait-seconds", type=int, default=90, help="Fallback wait when --hold runs without interactive stdin")
     parser.add_argument("--wait-attempts", type=int, default=12, help="Number of login detection attempts after manual wait")
     parser.add_argument("--wait-delay-seconds", type=int, default=5, help="Delay between login detection attempts")
@@ -333,6 +339,24 @@ def main() -> None:
             print("account_switch_ready=true")
         elif after:
             print("account_switch_ready=false")
+    if args.diagnose:
+        from argparse import Namespace
+        from kwork_login_diagnostics import run_diagnostics
+
+        diagnostic = run_diagnostics(
+            Namespace(
+                account=account,
+                profile=".browser-profile-zerroone",
+                open_login=False,
+                hold=False,
+                check_only=True,
+                restart_check=True,
+            )
+        )
+        print(f"diagnostics_report={REPORTS / 'kwork_login_diagnostics_report.md'}")
+        print(f"diagnostics_detected_username={diagnostic.detected_username}")
+        print(f"diagnostics_account_guard_status={diagnostic.account_guard_status}")
+        print(f"persistence_confirmed={str(diagnostic.persistence_confirmed).lower()}")
 
 
 if __name__ == "__main__":

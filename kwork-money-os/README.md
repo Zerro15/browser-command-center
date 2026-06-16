@@ -285,12 +285,50 @@ Log in manually in the opened Chromium window. The scripts do not enter login, p
 Run from `kwork-money-os`:
 
 ```bash
-.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --login-page --wait-login --hold
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --login-page --wait-login --hold --diagnose
 ```
 
 The wizard opens the dedicated Playwright Chromium profile `.browser-profile-zerroone` and, when needed, opens the Kwork login page. Complete login manually in that Chromium window only. A login in Yandex Browser does not count for Playwright Chromium.
 
 After the manual wait, the wizard checks login and public username up to 12 times. `detected_username=ZerroOne` means `account_guard_status=ok`; any other username or `unknown` stops automation. The script never writes credentials, never types login/password/SMS/phone, and never clicks final buttons.
+
+## Fix Playwright Login For ZerroOne
+
+The main workflow uses Playwright Chromium with the persistent profile:
+
+```text
+.browser-profile-zerroone/
+```
+
+Do not use Yandex Browser or a normal Chrome profile for the Kwork Money OS workflow. Do not copy cookies, session files, passwords, local storage, or tokens from any other browser. Log in once manually inside Playwright Chromium, then let `.browser-profile-zerroone` persist the session.
+
+Open the login page and diagnose the profile:
+
+```bash
+.venv/bin/python scripts/kwork_login_diagnostics.py --account ZerroOne --profile .browser-profile-zerroone --open-login --hold
+```
+
+After manual login, open `https://kwork.ru/user/ZerroOne` in that Chromium window, return to the terminal, and press Enter. Then verify persistence without touching final actions:
+
+```bash
+.venv/bin/python scripts/kwork_login_diagnostics.py --account ZerroOne --profile .browser-profile-zerroone --check-only --restart-check
+```
+
+The report is local-only:
+
+```text
+reports/kwork_login_diagnostics_report.md
+```
+
+Continue with read-only post-phone/dashboard checks only when the diagnostics report shows:
+
+```text
+detected_username: ZerroOne
+account_guard_status: ok
+persistence_confirmed: true
+```
+
+If `login_detected=true` but username is still unknown, the guard reports `unknown_logged_in`; open the public profile page `https://kwork.ru/user/ZerroOne` in Playwright Chromium and rerun diagnostics. If `login_detected=false`, finish manual login in Playwright Chromium. Final actions remain manual-only.
 
 ## Kwork Account Optimizer + Reply Assistant
 
