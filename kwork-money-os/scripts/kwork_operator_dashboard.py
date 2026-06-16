@@ -29,6 +29,9 @@ TEMPLATE_README = ROOT / "templates" / "yandex_direct_sheets_exporter" / "README
 DASHBOARD_MD = REPORTS / "operator_dashboard.md"
 DASHBOARD_HTML = REPORTS / "operator_dashboard.html"
 TEMPLATE_PATH = ROOT / "templates" / "yandex_direct_sheets_exporter"
+PORTFOLIO_DIR = DATA / "portfolio"
+PORTFOLIO_INDEX = PORTFOLIO_DIR / "portfolio_index.md"
+PORTFOLIO_CHECKLIST = PORTFOLIO_DIR / "portfolio_upload_checklist.md"
 
 MANUAL_ONLY = [
     "Phone/SMS verification is manual-only.",
@@ -53,6 +56,8 @@ class DashboardData:
     delivery_questions: list[str]
     delivery_steps: list[str]
     template_summary: str
+    portfolio_cases: list[str]
+    portfolio_checklist: list[str]
     git_commit: str
 
 
@@ -165,6 +170,20 @@ def parse_delivery_steps() -> list[str]:
     return steps
 
 
+def parse_portfolio_cases(text: str) -> list[str]:
+    cases: list[str] = []
+    for line in text.splitlines():
+        match = re.match(r"-\s+\[(.+?)\]\((.+?)\)\s+-\s+(.+)", line)
+        if match:
+            title, path, summary = match.groups()
+            cases.append(f"{title} (`{path}`) - {summary}")
+    return cases[:3]
+
+
+def parse_numbered_items(text: str, limit: int = 10) -> list[str]:
+    return [match.group(1).strip() for match in re.finditer(r"^\d+\.\s+(.+)$", text, re.M)][:limit]
+
+
 def collect_data() -> DashboardData:
     git_commit = validate_root()
     daily_text = read_text(DAILY_REPORT)
@@ -172,6 +191,8 @@ def collect_data() -> DashboardData:
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
+    portfolio_index = read_text(PORTFOLIO_INDEX)
+    portfolio_checklist = read_text(PORTFOLIO_CHECKLIST)
     proposal, price, deadline, questions = parse_proposal(proposal_text_raw)
     delivery_files = sorted(path.name for path in DELIVERY_KIT.glob("*") if path.is_file()) if DELIVERY_KIT.exists() else []
     return DashboardData(
@@ -186,6 +207,8 @@ def collect_data() -> DashboardData:
         delivery_questions=parse_delivery_questions(),
         delivery_steps=parse_delivery_steps(),
         template_summary=template_readme.split("## What It Does", 1)[0].strip(),
+        portfolio_cases=parse_portfolio_cases(portfolio_index),
+        portfolio_checklist=parse_numbered_items(portfolio_checklist, limit=8),
         git_commit=git_commit,
     )
 
@@ -208,6 +231,7 @@ def build_markdown(data: DashboardData) -> str:
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
         f"- safe_shortlist_count: `{value(data.daily, 'safe_shortlist_count')}`",
         f"- best_lead_of_day: {best_title}",
+        f"- portfolio_pack_status: `ready ({len(data.portfolio_cases)} demo cases)`",
         "",
         "## Best Lead",
         f"- title: {best_title}",
@@ -255,6 +279,17 @@ def build_markdown(data: DashboardData) -> str:
         "- mock mode: `.venv/bin/python src/main.py --mock`",
         "- tests: `.venv/bin/python -m unittest discover tests`",
         "- credentials needed from client: `YANDEX_DIRECT_TOKEN`, `YANDEX_CLIENT_LOGIN`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `SPREADSHEET_ID`.",
+        "",
+        "## Portfolio Pack",
+        f"- status: `ready ({len(data.portfolio_cases)} demo cases)`",
+        f"- index: `{PORTFOLIO_INDEX.relative_to(ROOT)}`",
+        "- usage: manual profile/portfolio preparation only; not fake reviews or fake commercial orders.",
+        "",
+        "### Demo Cases",
+        *(f"- {item}" for item in data.portfolio_cases),
+        "",
+        "### Manual Upload Checklist",
+        *(f"- {item}" for item in data.portfolio_checklist),
         "",
         "## Manual-Only Checklist",
         *(f"- {item}" for item in MANUAL_ONLY),

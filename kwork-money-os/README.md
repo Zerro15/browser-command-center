@@ -346,6 +346,21 @@ data/leads/best_lead_of_day_proposal.md
 
 These files are local-only. The proposal is not sent automatically. Sending proposals remains manual-only after phone verification is completed manually; do not automate `Предложить услугу`, `Отправить`, messages, phone/SMS, withdrawal, publication, moderation, or order actions.
 
+Kwork Portfolio Pack:
+
+```text
+data/portfolio/
+```
+
+The portfolio pack contains three public-safe demo cases for the `ZerroOne` profile:
+- Telegram bot for lead capture into Google Sheets;
+- Yandex Direct statistics export to Google Sheets;
+- simple project launch in Docker with client instructions.
+
+These are honest examples, starter templates, and demo projects. They must not be described as fake reviews, paid commercial orders, or completed client work unless that becomes true later. Use wording such as "demo project", "example solution", "starter template", and "ready structure for quick adaptation".
+
+Portfolio upload to Kwork is manual-only. Do not automate portfolio upload, profile save, moderation, publication, proposal sending, phone/SMS verification, withdrawal setup, messages, or order actions.
+
 Kwork Operator Dashboard:
 
 ```bash
@@ -353,7 +368,7 @@ npm run money:dashboard
 .venv/bin/python scripts/kwork_operator_dashboard.py --build
 ```
 
-The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, and manual-only checklist into:
+The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, and manual-only checklist into:
 
 ```text
 reports/operator_dashboard.md
