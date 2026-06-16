@@ -25,6 +25,7 @@
     "money:best-lead": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_best_lead_of_day.py",
     "money:dashboard": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_operator_dashboard.py --build",
     "money:order-executor": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_order_executor.py",
+    "money:post-phone": "test -x kwork-money-os/.venv/bin/python || (echo 'Create venv and install dependencies first' >&2; exit 1); kwork-money-os/.venv/bin/python kwork-money-os/scripts/kwork_post_phone_readiness.py",
     "money:check-private": "kwork-money-os/.venv/bin/python kwork-money-os/scripts/check_private_leaks.py"
   },
   "engines": {

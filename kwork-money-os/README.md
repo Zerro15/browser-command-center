@@ -404,6 +404,24 @@ reports/order_executor_report.md
 
 Use it after a future order is manually discussed/accepted. It prepares questions, scope limits, tech plan, task checklist, acceptance criteria, handoff draft, risk notes, `.env.example`, and a `project/` starter area. Real tokens, passwords, cookies, screenshots, sessions, and client private data must stay out of Git. `data/orders/prepared/` and `reports/order_executor_report.md` are ignored/local-only.
 
+Post-Phone Readiness:
+
+```bash
+npm run money:post-phone -- --preview --hold
+.venv/bin/python scripts/kwork_post_phone_readiness.py --preview --hold
+```
+
+Post-Phone Readiness is a read-only Playwright Chromium check for the moment after the user manually links a phone on Kwork. It opens Kwork with the persistent `.browser-profile`, checks `login_detected`, public username, phone verification stop, seller/profile access, and create-kwork page access.
+
+It writes local-only reports:
+
+```text
+reports/post_phone_readiness_report.md
+reports/post_phone_readiness_bridge_report.md
+```
+
+It does not fill profile fields, publish kworks, click `Опубликовать`, click `На модерацию`, click `Сохранить профиль`, send proposals/messages, accept orders, touch phone/SMS, or configure withdrawal. Use the report to decide whether it is safe to continue with profile filling or draft preparation; final actions remain manual-only.
+
 Kwork Operator Dashboard:
 
 ```bash
@@ -411,7 +429,7 @@ npm run money:dashboard
 .venv/bin/python scripts/kwork_operator_dashboard.py --build
 ```
 
-The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, Offer Factory, Order Executor status, and manual-only checklist into:
+The operator dashboard is built locally from saved reports and artifacts. It collects the daily pipeline status, Post-Phone Readiness, Best Lead of Day, top proposals, copy-paste proposal text, delivery kit, starter template, portfolio pack, Offer Factory, Order Executor status, and manual-only checklist into:
 
 ```text
 reports/operator_dashboard.md
@@ -434,6 +452,8 @@ reports/daily_lead_pipeline_report.md
 reports/best_lead_of_day.md
 reports/operator_dashboard.md
 reports/operator_dashboard.html
+reports/post_phone_readiness_report.md
+reports/post_phone_readiness_bridge_report.md
 data/profile/profile_optimized.json
 data/leads/
 data/offers/optimized/
@@ -454,6 +474,8 @@ Do not push:
 - `reports/best_lead_of_day.md`;
 - `reports/operator_dashboard.md`;
 - `reports/operator_dashboard.html`;
+- `reports/post_phone_readiness_report.md`;
+- `reports/post_phone_readiness_bridge_report.md`;
 - `reports/reply_drafts.md`;
 - `reports/autopilot_report.md`;
 - `reports/browser_fill_report.md`;

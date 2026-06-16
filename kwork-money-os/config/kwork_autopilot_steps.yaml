@@ -12,6 +12,9 @@ click:
     - Новый кворк
 choose_category:
   category: Разработка и IT
+  parent_value: '11'
+  subcategory_value: '41'
+  subcategory_label: Скрипты, боты и mini apps
   subcategory_candidates:
     - Чат-боты
     - Telegram боты

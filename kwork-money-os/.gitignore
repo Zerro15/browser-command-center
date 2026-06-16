@@ -27,6 +27,8 @@ reports/reply_drafts.md
 reports/autopilot_report.md
 reports/browser_fill_report.md
 reports/order_executor_report.md
+reports/post_phone_readiness_report.md
+reports/post_phone_readiness_bridge_report.md
 *.cookies.json
 *.state.json
 

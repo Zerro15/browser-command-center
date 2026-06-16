@@ -36,6 +36,7 @@ PORTFOLIO_CHECKLIST = PORTFOLIO_DIR / "portfolio_upload_checklist.md"
 OFFER_FACTORY_DIR = DATA / "offers" / "factory"
 OFFER_FACTORY_REPORT = REPORTS / "offer_factory_report.md"
 ORDER_EXECUTOR_REPORT = REPORTS / "order_executor_report.md"
+POST_PHONE_REPORT = REPORTS / "post_phone_readiness_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -59,6 +60,7 @@ MANUAL_ONLY = [
 class DashboardData:
     daily: dict[str, str]
     best: dict[str, str]
+    post_phone: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -256,6 +258,7 @@ def collect_data() -> DashboardData:
     git_commit = validate_root()
     daily_text = read_text(DAILY_REPORT)
     best_text = read_text(BEST_REPORT)
+    post_phone_text = read_optional(POST_PHONE_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -268,6 +271,7 @@ def collect_data() -> DashboardData:
     return DashboardData(
         daily=parse_fields(daily_text),
         best=parse_fields(best_text),
+        post_phone=parse_fields(post_phone_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -303,12 +307,24 @@ def build_markdown(data: DashboardData) -> str:
         "## Current Status",
         f"- login_detected: `{value(data.daily, 'login_detected')}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
+        f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
         f"- safe_shortlist_count: `{value(data.daily, 'safe_shortlist_count')}`",
         f"- best_lead_of_day: {best_title}",
         f"- portfolio_pack_status: `ready ({len(data.portfolio_cases)} demo cases)`",
         f"- offer_factory_status: `ready ({len(data.offer_factory)} offers)`",
         f"- order_executor_status: `{data.order_executor_status}`",
+        "",
+        "## Post-Phone Readiness",
+        f"- report: `{POST_PHONE_REPORT.relative_to(ROOT)}`",
+        f"- login_detected: `{value(data.post_phone, 'login_detected', 'not_checked')}`",
+        f"- username: `{value(data.post_phone, 'username', 'not_checked')}`",
+        f"- phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
+        f"- create_kwork_accessible: `{value(data.post_phone, 'create_kwork_accessible', 'not_checked')}`",
+        f"- seller_profile_accessible: `{value(data.post_phone, 'seller_profile_accessible', 'not_checked')}`",
+        f"- can_continue_profile_setup: `{value(data.post_phone, 'can_continue_profile_setup', 'not_checked')}`",
+        f"- can_continue_kwork_draft: `{value(data.post_phone, 'can_continue_kwork_draft', 'not_checked')}`",
+        "- mode: read-only preview; no save/publish/send/final buttons are clicked.",
         "",
         "## Best Lead",
         f"- title: {best_title}",
@@ -470,6 +486,7 @@ def write_dashboard() -> None:
     print(f"best_lead={value(data.best, 'project_title')}")
     print(f"login_detected={value(data.daily, 'login_detected')}")
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
+    print(f"post_phone_verification_detected={value(data.post_phone, 'phone_verification_detected', 'not_checked')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")
     print(f"offer_factory_count={len(data.offer_factory)}")
     print(f"order_executor_status={data.order_executor_status}")
