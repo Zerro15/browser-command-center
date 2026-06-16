@@ -10,7 +10,13 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from _common import REPORTS, ROOT, ensure_dir
-from account_guard import apply_account_guard_to_report, evaluate_account_guard
+from account_guard import (
+    apply_account_guard_to_report,
+    browser_profile_paths,
+    evaluate_account_guard,
+    load_account_guard_config,
+    normalize_username,
+)
 from browser_rpa_bridge import KWORK_HOME_URL, REPORT_PATH, SCREENSHOT_DIR, KworkRpaBridge, RpaReport
 
 
@@ -29,6 +35,8 @@ MANUAL_ONLY = [
 class SwitchSnapshot:
     label: str
     login_detected: str
+    active_browser_profile_path: str
+    fallback_browser_profile_path: str
     detected_username: str
     expected_username: str
     account_guard_status: str
@@ -38,14 +46,16 @@ class SwitchSnapshot:
     current_url: str
 
 
-def snapshot(label: str, bridge: KworkRpaBridge) -> SwitchSnapshot:
+def snapshot(label: str, bridge: KworkRpaBridge, expected_username: str) -> SwitchSnapshot:
     bridge.detect_login_state()
-    guard = evaluate_account_guard(bridge.detect_public_username())
+    guard = evaluate_account_guard(bridge.detect_public_username(), expected_username=expected_username)
     apply_account_guard_to_report(bridge.report, guard)
     phone_detected = bridge.detect_phone_verification_required(f"manual-switch-phone-stop-{label}")
     return SwitchSnapshot(
         label=label,
         login_detected=bridge.report.login_detected,
+        active_browser_profile_path=bridge.report.active_browser_profile_path,
+        fallback_browser_profile_path=bridge.report.fallback_browser_profile_path,
         detected_username=guard.detected_username,
         expected_username=guard.expected_username,
         account_guard_status=guard.account_guard_status,
@@ -64,6 +74,8 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
         "",
         f"- generated_at: `{datetime.now().isoformat(timespec='seconds')}`",
         f"- expected_username: `{final.expected_username}`",
+        f"- active_browser_profile_path: `{final.active_browser_profile_path}`",
+        f"- fallback_browser_profile_path: `{final.fallback_browser_profile_path}`",
         f"- detected_username_before: `{before.detected_username}`",
         f"- detected_username_after: `{final.detected_username}`",
         f"- account_guard_status: `{final.account_guard_status}`",
@@ -77,6 +89,8 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
         "",
         "## Before",
         f"- login_detected: `{before.login_detected}`",
+        f"- active_browser_profile_path: `{before.active_browser_profile_path}`",
+        f"- fallback_browser_profile_path: `{before.fallback_browser_profile_path}`",
         f"- detected_username: `{before.detected_username}`",
         f"- account_guard_status: `{before.account_guard_status}`",
         f"- account_guard_action: `{before.account_guard_action}`",
@@ -88,6 +102,8 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
         lines.extend(
             [
                 f"- login_detected: `{after.login_detected}`",
+                f"- active_browser_profile_path: `{after.active_browser_profile_path}`",
+                f"- fallback_browser_profile_path: `{after.fallback_browser_profile_path}`",
                 f"- detected_username: `{after.detected_username}`",
                 f"- account_guard_status: `{after.account_guard_status}`",
                 f"- account_guard_action: `{after.account_guard_action}`",
@@ -106,7 +122,8 @@ def write_switch_report(before: SwitchSnapshot, after: SwitchSnapshot | None, re
             *(f"- {item}" for item in MANUAL_ONLY),
             "",
             "## Safety",
-            "- This flow only opens Playwright Chromium with `.browser-profile` and reads public username signals.",
+            "- This flow only opens Playwright Chromium with the configured target account profile and reads public username signals.",
+            "- It does not copy cookies/session data from fallback or legacy profiles.",
             "- It does not enter passwords, SMS codes, phone numbers, cookies, tokens, or credentials.",
             "- It does not click profile save, publish, moderation, send, proposal, withdrawal, order, delete, or confirmation buttons.",
         ]
@@ -136,29 +153,42 @@ def wait_for_manual_switch(bridge: KworkRpaBridge, seconds: int) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Open Playwright Chromium for manual Kwork login/account switch")
+    parser.add_argument("--account", default="ZerroOne", help="Expected Kwork public username; currently intended for ZerroOne")
     parser.add_argument("--hold", action="store_true", help="Keep Chromium open so the user can switch to ZerroOne manually")
     parser.add_argument("--wait-seconds", type=int, default=90, help="Fallback wait when --hold runs without interactive stdin")
     args = parser.parse_args()
 
+    config = load_account_guard_config()
+    account = normalize_username(args.account)
+    if account != config.expected_username:
+        raise SystemExit(
+            f"--account must match configured expected_username `{config.expected_username}`. "
+            f"Got `{args.account}`."
+        )
+    active_path, fallback_path = browser_profile_paths(config)
     report = RpaReport(mode="manual-login", target_url=KWORK_HOME_URL)
     with KworkRpaBridge(report) as bridge:
         bridge.open(KWORK_HOME_URL)
-        before = snapshot("before", bridge)
-        if before.account_guard_status == "mismatch":
-            print("Нужно вручную переключиться на ZerroOne в открытом Chromium.")
+        before = snapshot("before", bridge, account)
+        if before.login_detected != "true":
+            print(f"Нужно вручную войти в {account} в открытом Chromium.")
+        elif before.account_guard_status != "ok":
+            print(f"Нужно вручную переключиться на {account} в открытом Chromium.")
         report.next_safe_command = (
-            "switch manually to ZerroOne in Chromium, then rerun the intended safe flow"
+            f"switch/login manually to {account} in Chromium, then rerun the intended safe flow"
         )
         bridge.wait_and_screenshot("manual-account-switch-before")
         report.write()
         write_switch_report(before, None, report)
         print(REPORT_PATH)
         print(SWITCH_REPORT_PATH)
+        print(f"active_browser_profile_path={active_path}")
+        print(f"fallback_browser_profile_path={fallback_path}")
         print_guard_state("before_hold", report)
         after = None
         if args.hold:
             wait_for_manual_switch(bridge, args.wait_seconds)
-            after = snapshot("after", bridge)
+            after = snapshot("after", bridge, account)
             bridge.wait_and_screenshot("manual-account-switch-after")
             report.write()
             write_switch_report(before, after, report)

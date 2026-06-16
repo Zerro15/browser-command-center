@@ -1,6 +1,7 @@
 
 # Kwork Money OS private/runtime data
 .venv/
+.browser-profile-zerroone/
 .browser-profile/
 .auth/
 data/private/

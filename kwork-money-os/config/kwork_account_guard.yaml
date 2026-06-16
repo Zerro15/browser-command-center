@@ -1,4 +1,6 @@
 expected_username: ZerroOne
+browser_profile_path: .browser-profile-zerroone
+fallback_browser_profile_path: .browser-profile
 allowed_usernames:
   - ZerroOne
   - bogdanmashenin

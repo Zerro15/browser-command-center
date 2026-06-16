@@ -55,6 +55,8 @@ class ReadinessStatus:
     git_commit: str = ""
     login_detected: str = "unknown"
     username: str = "unknown"
+    active_browser_profile_path: str = ""
+    fallback_browser_profile_path: str = ""
     detected_username: str = "unknown"
     expected_username: str = EXPECTED_USERNAME
     allowed_usernames: str = ""
@@ -98,6 +100,8 @@ def apply_guard(status: ReadinessStatus, bridge: KworkRpaBridge) -> None:
     result = evaluate_account_guard(bridge.detect_public_username())
     apply_account_guard_to_report(bridge.report, result)
     status.username = result.detected_username
+    status.active_browser_profile_path = bridge.report.active_browser_profile_path
+    status.fallback_browser_profile_path = bridge.report.fallback_browser_profile_path
     status.detected_username = result.detected_username
     status.expected_username = result.expected_username
     status.allowed_usernames = ", ".join(result.allowed_usernames)
@@ -171,6 +175,8 @@ def write_report(status: ReadinessStatus) -> None:
         f"- git_commit: `{status.git_commit}`",
         f"- login_detected: `{status.login_detected}`",
         f"- username: `{status.username}`",
+        f"- active_browser_profile_path: `{status.active_browser_profile_path or 'unknown'}`",
+        f"- fallback_browser_profile_path: `{status.fallback_browser_profile_path or 'unknown'}`",
         f"- detected_username: `{status.detected_username}`",
         f"- expected_username: `{status.expected_username}`",
         f"- allowed_usernames: `{status.allowed_usernames or 'unknown'}`",
@@ -260,6 +266,8 @@ def run_preview(hold: bool) -> ReadinessStatus:
     print(REPORT_PATH)
     print(f"login_detected={status.login_detected}")
     print(f"username={status.username}")
+    print(f"active_browser_profile_path={status.active_browser_profile_path}")
+    print(f"fallback_browser_profile_path={status.fallback_browser_profile_path}")
     print(f"detected_username={status.detected_username}")
     print(f"expected_username={status.expected_username}")
     print(f"account_guard_status={status.account_guard_status}")

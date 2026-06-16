@@ -121,7 +121,7 @@ This only creates local markdown and JSON in `data/profile/`.
 The RPA bridge uses a visible Chromium browser with persistent profile:
 
 ```text
-kwork-money-os/.browser-profile
+kwork-money-os/.browser-profile-zerroone
 ```
 
 Manual login flow:
@@ -228,6 +228,8 @@ config/kwork_account_guard.yaml
 
 Default policy:
 - `expected_username`: `ZerroOne`;
+- `browser_profile_path`: `.browser-profile-zerroone`;
+- `fallback_browser_profile_path`: `.browser-profile`;
 - `allowed_usernames`: `ZerroOne`, `bogdanmashenin`;
 - `bogdanmashenin` is known, but not the target account;
 - if detected username is `bogdanmashenin`, guard status is `mismatch` and action is `stop_for_confirmation`;
@@ -239,12 +241,36 @@ When Account Guard is not `ok`, browser flows stop before profile fill, kwork dr
 Manual account switch helper:
 
 ```bash
-.venv/bin/python scripts/manual_kwork_login.py --hold
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --hold
 ```
 
-It opens Playwright Chromium with `.browser-profile`, prints `detected_username`, leaves the browser open for manual switch to `ZerroOne`, then checks again after Enter. Do not save passwords to files, and do not automate account switching.
+It opens Playwright Chromium with `.browser-profile-zerroone`, prints `detected_username`, leaves the browser open for manual login/switch to `ZerroOne`, then checks again after Enter or the configured wait. Do not save passwords to files, and do not automate account switching.
 
 Final actions remain manual-only always: profile save, publish, moderation, proposals, messages, order actions, withdrawal, phone/SMS, delete, and confirmations.
+
+## Dedicated ZerroOne Browser Profile
+
+Kwork Money OS uses a dedicated Playwright Chromium profile for the target account:
+
+```text
+.browser-profile-zerroone/
+```
+
+The legacy profile can still exist:
+
+```text
+.browser-profile/
+```
+
+Use `.browser-profile-zerroone` for `ZerroOne` only. Do not copy cookies, session files, passwords, tokens, or credentials from `.browser-profile` into the new profile. If `.browser-profile` is logged in as `bogdanmashenin`, that is expected legacy state and must not be used for target automation.
+
+If `.browser-profile-zerroone` is empty or `login_detected=false`, run:
+
+```bash
+.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --hold
+```
+
+Log in manually in the opened Chromium window. The scripts do not enter login, password, phone, SMS, or credentials automatically and do not write them to project files. If the detected username is not `ZerroOne`, Account Guard stops profile fill, kwork draft fill, and Lead Radar browser scans.
 
 ## Kwork Account Optimizer + Reply Assistant
 
@@ -303,11 +329,11 @@ npm run money:lead-radar -- --run --approve --hold
 
 `--dry-run` does not open a browser and can find `0` projects. It only validates local wiring and writes a local report.
 
-`--preview --hold` opens a visible Playwright Chromium window with the persistent profile `kwork-money-os/.browser-profile`, checks `login_detected`, and leaves the browser open for manual review.
+`--preview --hold` opens a visible Playwright Chromium window with the configured target profile `kwork-money-os/.browser-profile-zerroone`, checks `login_detected`, and leaves the browser open for manual review.
 
 `--run --approve --hold` performs the read-only project collection, scoring, and local proposal draft generation. It writes local files only and still never submits anything.
 
-Lead Radar uses Playwright Chromium, not Yandex Browser. If you are logged in through Yandex Browser, that does not count for Playwright Chromium. If `login_detected` is false, run `npm run money:lead-radar -- --preview --hold`, log in manually in the opened Chromium window, and do not save passwords, cookies, SMS codes, or credentials to project files.
+Lead Radar uses Playwright Chromium, not Yandex Browser. If you are logged in through Yandex Browser, that does not count for Playwright Chromium. If `login_detected` is false, run `.venv/bin/python scripts/manual_kwork_login.py --account ZerroOne --hold`, log in manually in the opened Chromium window, and do not save passwords, cookies, SMS codes, or credentials to project files.
 
 Lead Radar also checks Kwork Account Guard. If Playwright Chromium is logged in as `bogdanmashenin` or any non-target account, it stops before scanning projects and writes `account_guard_status` to `reports/lead_radar_report.md`. Switch manually to `ZerroOne` in Chromium before running browser collection.
 
@@ -445,7 +471,7 @@ npm run money:post-phone -- --preview --hold
 .venv/bin/python scripts/kwork_post_phone_readiness.py --preview --hold
 ```
 
-Post-Phone Readiness is a read-only Playwright Chromium check for the moment after the user manually links a phone on Kwork. It opens Kwork with the persistent `.browser-profile`, checks `login_detected`, public username, phone verification stop, seller/profile access, and create-kwork page access.
+Post-Phone Readiness is a read-only Playwright Chromium check for the moment after the user manually links a phone on Kwork. It opens Kwork with the persistent `.browser-profile-zerroone`, checks `login_detected`, public username, phone verification stop, seller/profile access, and create-kwork page access.
 
 It writes Account Guard fields into the report: `detected_username`, `expected_username`, `allowed_usernames`, `account_guard_status`, `account_guard_action`, and `account_guard_message`. If detected username is `bogdanmashenin`, `profile_ready_to_save_manually=false` and `kwork_draft_ready_to_continue=false` until the user manually switches Chromium to `ZerroOne`.
 
@@ -521,7 +547,7 @@ Do not push:
 - `data/leads/`;
 - `data/offers/optimized/` generated files, except `example_offer.json`;
 - `data/replies/`;
-- `.browser-profile/`, `.auth/`, `.venv/`, screenshots, cookies, state files, and `.env`.
+- `.browser-profile-zerroone/`, `.browser-profile/`, `.auth/`, `.venv/`, screenshots, cookies, state files, and `.env`.
 
 Public-safe examples live in:
 - `reports/account_audit.example.md`;
@@ -537,7 +563,8 @@ git status --short --ignored
 npm run money:check-private
 ```
 
-The local runtime profile is `kwork-money-os/.browser-profile/`.
+The target local runtime profile is `kwork-money-os/.browser-profile-zerroone/`.
+The legacy/fallback runtime profile is `kwork-money-os/.browser-profile/`.
 Screenshots are stored in `kwork-money-os/reports/screenshots/`.
 Private generated strategy and account reports are in `kwork-money-os/reports/`.
 Private generated leads and proposal drafts are in `kwork-money-os/data/leads/`.

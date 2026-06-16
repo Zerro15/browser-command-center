@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 from _common import DATA, REPORTS, ROOT, ensure_dir
+from account_guard import browser_profile_paths
 
 
 EXPECTED_REPO_ROOT = Path("/home/zerro/projects/browser-command-center")
@@ -82,6 +83,8 @@ class PipelineStatus:
     hold: bool = False
     git_commit: str = ""
     login_detected: str = "not_checked"
+    active_browser_profile_path: str = "not_checked"
+    fallback_browser_profile_path: str = "not_checked"
     detected_username: str = "not_checked"
     expected_username: str = "ZerroOne"
     allowed_usernames: str = "ZerroOne, bogdanmashenin"
@@ -212,6 +215,8 @@ def run_lead_radar(status: PipelineStatus) -> None:
     status.lead_radar_stderr_tail = one_line_tail(result.stderr)
 
     status.login_detected = read_report_field(LEAD_RADAR_REPORT, "login_detected", "unknown")
+    status.active_browser_profile_path = read_report_field(LEAD_RADAR_REPORT, "active_browser_profile_path", "unknown")
+    status.fallback_browser_profile_path = read_report_field(LEAD_RADAR_REPORT, "fallback_browser_profile_path", "unknown")
     status.detected_username = read_report_field(LEAD_RADAR_REPORT, "detected_username", "unknown")
     status.expected_username = read_report_field(LEAD_RADAR_REPORT, "expected_username", "ZerroOne")
     status.allowed_usernames = read_report_field(LEAD_RADAR_REPORT, "allowed_usernames", "ZerroOne, bogdanmashenin")
@@ -281,6 +286,8 @@ def write_daily_report(status: PipelineStatus) -> None:
         f"- mode: `{status.mode}`",
         f"- git_commit: `{status.git_commit}`",
         f"- login_detected: `{status.login_detected}`",
+        f"- active_browser_profile_path: `{status.active_browser_profile_path}`",
+        f"- fallback_browser_profile_path: `{status.fallback_browser_profile_path}`",
         f"- detected_username: `{status.detected_username}`",
         f"- expected_username: `{status.expected_username}`",
         f"- allowed_usernames: `{status.allowed_usernames}`",
@@ -382,7 +389,10 @@ def main() -> None:
     if mode == "run":
         run_lead_radar(status)
     else:
+        active_path, fallback_path = browser_profile_paths()
         status.login_detected = "not_checked_dry_run"
+        status.active_browser_profile_path = str(active_path)
+        status.fallback_browser_profile_path = str(fallback_path)
         status.detected_username = "not_checked_dry_run"
         status.account_guard_status = "not_checked_dry_run"
         status.account_guard_action = "not_checked_dry_run"
@@ -404,6 +414,8 @@ def main() -> None:
     print(f"daily_pipeline_report={PIPELINE_REPORT}")
     print(f"mode={status.mode}")
     print(f"login_detected={status.login_detected}")
+    print(f"active_browser_profile_path={status.active_browser_profile_path}")
+    print(f"fallback_browser_profile_path={status.fallback_browser_profile_path}")
     print(f"detected_username={status.detected_username}")
     print(f"account_guard_status={status.account_guard_status}")
     print(f"account_guard_action={status.account_guard_action}")

@@ -22,9 +22,10 @@ from typing import Any
 import yaml
 
 from _common import CONFIG, DATA, REPORTS, ROOT, ensure_dir, load_json, load_yaml, require_manual_approval
+from account_guard import browser_profile_paths
 
 
-PROFILE_DIR = ROOT / ".browser-profile"
+PROFILE_DIR, FALLBACK_PROFILE_DIR = browser_profile_paths()
 SCREENSHOT_DIR = REPORTS / "screenshots"
 REPORT_PATH = REPORTS / "browser_fill_report.md"
 AUTOPILOT_REPORT_PATH = REPORTS / "autopilot_report.md"
@@ -66,6 +67,8 @@ class RpaReport:
     browser_opened: bool = False
     current_url: str = ""
     login_detected: str = "unknown"
+    active_browser_profile_path: str = ""
+    fallback_browser_profile_path: str = ""
     detected_username: str = "unknown"
     expected_username: str = "unknown"
     allowed_usernames: str = ""
@@ -73,6 +76,13 @@ class RpaReport:
     account_guard_action: str = "not_checked"
     account_guard_message: str = ""
     next_safe_command: str = ""
+
+    def __post_init__(self) -> None:
+        active_path, fallback_path = browser_profile_paths()
+        if not self.active_browser_profile_path:
+            self.active_browser_profile_path = str(active_path)
+        if not self.fallback_browser_profile_path:
+            self.fallback_browser_profile_path = str(fallback_path)
 
     def warn(self, message: str) -> None:
         self.warnings.append(message)
@@ -95,6 +105,8 @@ class RpaReport:
             f"browser_opened: `{str(self.browser_opened).lower()}`",
             f"current_url: `{self.current_url or 'unknown'}`",
             f"login_detected: `{self.login_detected}`",
+            f"active_browser_profile_path: `{self.active_browser_profile_path}`",
+            f"fallback_browser_profile_path: `{self.fallback_browser_profile_path}`",
             f"detected_username: `{self.detected_username}`",
             f"expected_username: `{self.expected_username}`",
             f"allowed_usernames: `{self.allowed_usernames or 'unknown'}`",
@@ -230,6 +242,9 @@ class KworkRpaBridge:
         self.context = None
         self.page = None
         self.stopped = False
+        self.profile_dir, self.fallback_profile_dir = browser_profile_paths()
+        self.report.active_browser_profile_path = str(self.profile_dir)
+        self.report.fallback_browser_profile_path = str(self.fallback_profile_dir)
 
     def __enter__(self):
         sync_playwright, timeout_error = import_playwright(self.report)
@@ -238,17 +253,20 @@ class KworkRpaBridge:
         self.sync_playwright = sync_playwright
         self.timeout_error = timeout_error
         self.playwright = sync_playwright().start()
-        ensure_dir(PROFILE_DIR)
+        self.profile_dir, self.fallback_profile_dir = browser_profile_paths()
+        self.report.active_browser_profile_path = str(self.profile_dir)
+        self.report.fallback_browser_profile_path = str(self.fallback_profile_dir)
+        ensure_dir(self.profile_dir)
         try:
             self.context = self.playwright.chromium.launch_persistent_context(
-                str(PROFILE_DIR),
+                str(self.profile_dir),
                 headless=False,
                 viewport={"width": 1440, "height": 1000},
             )
             self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
             self.report.browser_opened = True
             self.report.current_url = self.page.url
-            self.report.action(f"opened visible Chromium persistent profile: {PROFILE_DIR}")
+            self.report.action(f"opened visible Chromium persistent profile: {self.profile_dir}")
         except Exception as error:
             self.report.warn(f"Unable to open headed Playwright browser: {error}")
             self.playwright.stop()

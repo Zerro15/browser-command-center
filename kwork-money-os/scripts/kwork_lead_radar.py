@@ -18,7 +18,7 @@ from urllib.parse import quote_plus
 from _common import DATA, REPORTS, ROOT, ensure_dir
 from account_optimizer_common import FINAL_ACTION_WORDS, PROJECTS_URL, redact_text
 from account_guard import apply_account_guard_to_report, evaluate_account_guard
-from browser_rpa_bridge import KworkRpaBridge, PROFILE_DIR, RpaReport
+from browser_rpa_bridge import FALLBACK_PROFILE_DIR, KworkRpaBridge, PROFILE_DIR, RpaReport
 
 
 EXPECTED_REPO_ROOT = Path("/home/zerro/projects/browser-command-center")
@@ -31,6 +31,7 @@ MAX_CARDS_PER_TOPIC = 8
 MAX_DETAIL_PAGES = 10
 BROWSER_ENGINE = "Playwright Chromium"
 BROWSER_PROFILE_PATH = str(PROFILE_DIR)
+FALLBACK_BROWSER_PROFILE_PATH = str(FALLBACK_PROFILE_DIR)
 LOGIN_GUIDANCE = (
     "login_detected is not true in Playwright Chromium. Yandex Browser login does not count here. "
     "Use `npm run money:lead-radar -- --preview --hold`, log in manually in the opened Chromium window, "
@@ -98,6 +99,8 @@ class RadarStatus:
     git_commit: str = ""
     browser_engine: str = BROWSER_ENGINE
     browser_profile_path: str = BROWSER_PROFILE_PATH
+    active_browser_profile_path: str = BROWSER_PROFILE_PATH
+    fallback_browser_profile_path: str = FALLBACK_BROWSER_PROFILE_PATH
     mode_explanation: str = ""
     login_detected: str = "unknown"
     detected_username: str = "unknown"
@@ -161,8 +164,8 @@ def explain_mode(mode: str) -> str:
     if mode == "dry-run":
         return "No browser opens; validates local wiring and may find 0 projects."
     if mode == "preview":
-        return "Opens visible Playwright Chromium with .browser-profile, checks login, takes screenshots, and does not write lead data."
-    return "Read-only collection in visible Playwright Chromium with .browser-profile; writes local lead/proposal drafts and never sends anything."
+        return "Opens visible Playwright Chromium with the configured target-account profile, checks login, takes screenshots, and does not write lead data."
+    return "Read-only collection in visible Playwright Chromium with the configured target-account profile; writes local lead/proposal drafts and never sends anything."
 
 
 def search_url(topic: str) -> str:
@@ -459,8 +462,14 @@ def scan_projects(status: RadarStatus, mode: str) -> list[LeadRecord]:
         status.action("dry-run: browser was not opened and no Kwork pages were scanned")
         return []
     report = RpaReport(mode=f"lead-radar:{mode}", target_url=PROJECTS_URL, title="Kwork Lead Radar Browser Report")
+    status.browser_profile_path = report.active_browser_profile_path
+    status.active_browser_profile_path = report.active_browser_profile_path
+    status.fallback_browser_profile_path = report.fallback_browser_profile_path
     leads_by_id: dict[str, LeadRecord] = {}
     with KworkRpaBridge(report) as bridge:
+        status.browser_profile_path = report.active_browser_profile_path
+        status.active_browser_profile_path = report.active_browser_profile_path
+        status.fallback_browser_profile_path = report.fallback_browser_profile_path
         bridge.open(PROJECTS_URL)
         bridge.wait_and_screenshot("lead-radar-open")
         login_state = bridge.detect_login_state()
@@ -565,6 +574,8 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
         f"- git_commit: `{status.git_commit}`",
         f"- browser_engine: `{status.browser_engine}`",
         f"- browser_profile_path: `{status.browser_profile_path}`",
+        f"- active_browser_profile_path: `{status.active_browser_profile_path}`",
+        f"- fallback_browser_profile_path: `{status.fallback_browser_profile_path}`",
         f"- mode_explanation: `{status.mode_explanation}`",
         f"- login_detected: `{status.login_detected}`",
         f"- detected_username: `{status.detected_username}`",
@@ -602,7 +613,7 @@ def write_report(status: RadarStatus, leads: list[LeadRecord]) -> None:
         [
             "",
             "## Safety",
-            "- Lead Radar uses Playwright Chromium with the local `.browser-profile`; it does not use Yandex Browser.",
+            "- Lead Radar uses Playwright Chromium with the configured target-account profile; it does not use Yandex Browser.",
             "- A Yandex Browser login is separate and does not count as `login_detected` for this tool.",
             "- Read-only scan only; proposal buttons and message/send controls are never clicked.",
             "- Draft replies are local files only and are not submitted to Kwork.",

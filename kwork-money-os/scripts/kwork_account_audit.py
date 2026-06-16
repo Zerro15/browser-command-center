@@ -167,7 +167,7 @@ def run_audit(args: argparse.Namespace) -> None:
             "Kwork Account Audit",
             mode,
             [
-                "Open visible Chromium with kwork-money-os/.browser-profile only in preview/run.",
+                "Open visible Chromium with the configured target-account profile only in preview/run.",
                 "Require login_detected == true before inspection.",
                 "Visit profile, settings, kwork list, drafts, portfolio, inbox/projects/orders read-only.",
                 "Write reports/account_audit.md with redacted summaries.",

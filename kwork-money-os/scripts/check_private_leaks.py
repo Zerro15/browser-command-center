@@ -29,6 +29,7 @@ class Rule:
 
 
 FORBIDDEN_RULES = [
+    Rule("ZerroOne browser profile", "kwork-money-os/.browser-profile-zerroone/"),
     Rule("browser profile", "kwork-money-os/.browser-profile/"),
     Rule("virtualenv", "kwork-money-os/.venv/"),
     Rule("auth data", "kwork-money-os/.auth/"),

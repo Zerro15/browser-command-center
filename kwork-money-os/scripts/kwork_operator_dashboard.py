@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from _common import DATA, REPORTS, ROOT, ensure_dir
-from account_guard import load_account_guard_config
+from account_guard import browser_profile_paths, load_account_guard_config
 
 
 EXPECTED_REPO_ROOT = Path("/home/zerro/projects/browser-command-center")
@@ -38,6 +38,7 @@ OFFER_FACTORY_DIR = DATA / "offers" / "factory"
 OFFER_FACTORY_REPORT = REPORTS / "offer_factory_report.md"
 ORDER_EXECUTOR_REPORT = REPORTS / "order_executor_report.md"
 POST_PHONE_REPORT = REPORTS / "post_phone_readiness_report.md"
+ACCOUNT_SWITCH_REPORT = REPORTS / "account_switch_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -62,6 +63,7 @@ class DashboardData:
     daily: dict[str, str]
     best: dict[str, str]
     post_phone: dict[str, str]
+    account_switch: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -260,6 +262,7 @@ def collect_data() -> DashboardData:
     daily_text = read_text(DAILY_REPORT)
     best_text = read_text(BEST_REPORT)
     post_phone_text = read_optional(POST_PHONE_REPORT)
+    account_switch_text = read_optional(ACCOUNT_SWITCH_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -273,6 +276,7 @@ def collect_data() -> DashboardData:
         daily=parse_fields(daily_text),
         best=parse_fields(best_text),
         post_phone=parse_fields(post_phone_text),
+        account_switch=parse_fields(account_switch_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -297,15 +301,56 @@ def value(data: dict[str, str], key: str, default: str = "unknown") -> str:
     return data.get(key, default)
 
 
+def first_real(default: str, *items: str) -> str:
+    placeholders = {"", "unknown", "not_checked", "not_checked_dry_run", "none"}
+    for item in items:
+        if str(item).strip() not in placeholders:
+            return item
+    return default
+
+
 def build_markdown(data: DashboardData) -> str:
     best_title = value(data.best, "project_title")
     guard_config = load_account_guard_config()
-    guard_detected = value(data.post_phone, "detected_username", value(data.daily, "detected_username", "not_checked"))
+    active_path, fallback_path = browser_profile_paths(guard_config)
+    guard_detected = first_real(
+        "not_checked",
+        value(data.account_switch, "detected_username_after", ""),
+        value(data.post_phone, "detected_username", ""),
+        value(data.daily, "detected_username", ""),
+    )
     guard_expected = value(data.post_phone, "expected_username", value(data.daily, "expected_username", guard_config.expected_username))
     guard_allowed = value(data.post_phone, "allowed_usernames", value(data.daily, "allowed_usernames", ", ".join(guard_config.allowed_usernames)))
-    guard_status = value(data.post_phone, "account_guard_status", value(data.daily, "account_guard_status", "not_checked"))
-    guard_action = value(data.post_phone, "account_guard_action", value(data.daily, "account_guard_action", "not_checked"))
-    guard_message = value(data.post_phone, "account_guard_message", value(data.daily, "account_guard_message", "not_checked"))
+    guard_status = first_real(
+        "not_checked",
+        value(data.account_switch, "account_guard_status", ""),
+        value(data.post_phone, "account_guard_status", ""),
+        value(data.daily, "account_guard_status", ""),
+    )
+    guard_action = first_real(
+        "not_checked",
+        value(data.account_switch, "account_guard_action", ""),
+        value(data.post_phone, "account_guard_action", ""),
+        value(data.daily, "account_guard_action", ""),
+    )
+    guard_message = first_real(
+        "not_checked",
+        value(data.account_switch, "account_guard_message", ""),
+        value(data.post_phone, "account_guard_message", ""),
+        value(data.daily, "account_guard_message", ""),
+    )
+    active_browser_profile = first_real(
+        str(active_path),
+        value(data.account_switch, "active_browser_profile_path", ""),
+        value(data.post_phone, "active_browser_profile_path", ""),
+        value(data.daily, "active_browser_profile_path", ""),
+    )
+    fallback_browser_profile = first_real(
+        str(fallback_path),
+        value(data.account_switch, "fallback_browser_profile_path", ""),
+        value(data.post_phone, "fallback_browser_profile_path", ""),
+        value(data.daily, "fallback_browser_profile_path", ""),
+    )
     lines = [
         "# Kwork Operator Dashboard",
         "",
@@ -314,6 +359,8 @@ def build_markdown(data: DashboardData) -> str:
         "",
         "## Current Status",
         f"- login_detected: `{value(data.daily, 'login_detected')}`",
+        f"- active_browser_profile_path: `{active_browser_profile}`",
+        f"- fallback_browser_profile_path: `{fallback_browser_profile}`",
         f"- detected_username: `{guard_detected}`",
         f"- account_guard_status: `{guard_status}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
@@ -327,6 +374,8 @@ def build_markdown(data: DashboardData) -> str:
         "",
         "## Kwork Account Guard",
         f"- expected_username: `{guard_expected}`",
+        f"- active_browser_profile_path: `{active_browser_profile}`",
+        f"- fallback_browser_profile_path: `{fallback_browser_profile}`",
         f"- detected_username: `{guard_detected}`",
         f"- allowed_usernames: `{guard_allowed}`",
         f"- account_guard_status: `{guard_status}`",
@@ -335,10 +384,23 @@ def build_markdown(data: DashboardData) -> str:
         "- warning: Профиль, кворки и отклики готовить только для ZerroOne. Перед публикацией убедись, что работаешь в нужном аккаунте.",
         "- if_mismatch: automation stops before profile fill, kwork draft fill, and browser lead scan; switch account manually in Playwright Chromium.",
         "",
+        "## Account Switch",
+        f"- report: `{ACCOUNT_SWITCH_REPORT.relative_to(ROOT)}`",
+        f"- expected_username: `{value(data.account_switch, 'expected_username', guard_config.expected_username)}`",
+        f"- active_browser_profile_path: `{value(data.account_switch, 'active_browser_profile_path', str(active_path))}`",
+        f"- fallback_browser_profile_path: `{value(data.account_switch, 'fallback_browser_profile_path', str(fallback_path))}`",
+        f"- detected_username_before: `{value(data.account_switch, 'detected_username_before', 'not_checked')}`",
+        f"- detected_username_after: `{value(data.account_switch, 'detected_username_after', 'not_checked')}`",
+        f"- account_guard_status: `{value(data.account_switch, 'account_guard_status', 'not_checked')}`",
+        f"- account_guard_action: `{value(data.account_switch, 'account_guard_action', 'not_checked')}`",
+        "- mode: manual login/switch only; no credentials, SMS, save, publish, or send actions are automated.",
+        "",
         "## Post-Phone Readiness",
         f"- report: `{POST_PHONE_REPORT.relative_to(ROOT)}`",
         f"- login_detected: `{value(data.post_phone, 'login_detected', 'not_checked')}`",
         f"- username: `{value(data.post_phone, 'username', 'not_checked')}`",
+        f"- active_browser_profile_path: `{value(data.post_phone, 'active_browser_profile_path', str(active_path))}`",
+        f"- fallback_browser_profile_path: `{value(data.post_phone, 'fallback_browser_profile_path', str(fallback_path))}`",
         f"- detected_username: `{value(data.post_phone, 'detected_username', 'not_checked')}`",
         f"- expected_username: `{value(data.post_phone, 'expected_username', guard_config.expected_username)}`",
         f"- account_guard_status: `{value(data.post_phone, 'account_guard_status', 'not_checked')}`",
@@ -509,8 +571,44 @@ def write_dashboard() -> None:
     print(f"operator_dashboard_html={DASHBOARD_HTML}")
     print(f"best_lead={value(data.best, 'project_title')}")
     print(f"login_detected={value(data.daily, 'login_detected')}")
-    print(f"detected_username={value(data.post_phone, 'detected_username', value(data.daily, 'detected_username', 'not_checked'))}")
-    print(f"account_guard_status={value(data.post_phone, 'account_guard_status', value(data.daily, 'account_guard_status', 'not_checked'))}")
+    guard_config = load_account_guard_config()
+    active_path, fallback_path = browser_profile_paths(guard_config)
+    print(
+        "active_browser_profile_path="
+        + first_real(
+            str(active_path),
+            value(data.post_phone, "active_browser_profile_path", ""),
+            value(data.account_switch, "active_browser_profile_path", ""),
+            value(data.daily, "active_browser_profile_path", ""),
+        )
+    )
+    print(
+        "fallback_browser_profile_path="
+        + first_real(
+            str(fallback_path),
+            value(data.post_phone, "fallback_browser_profile_path", ""),
+            value(data.account_switch, "fallback_browser_profile_path", ""),
+            value(data.daily, "fallback_browser_profile_path", ""),
+        )
+    )
+    print(
+        "detected_username="
+        + first_real(
+            "not_checked",
+            value(data.account_switch, "detected_username_after", ""),
+            value(data.post_phone, "detected_username", ""),
+            value(data.daily, "detected_username", ""),
+        )
+    )
+    print(
+        "account_guard_status="
+        + first_real(
+            "not_checked",
+            value(data.account_switch, "account_guard_status", ""),
+            value(data.post_phone, "account_guard_status", ""),
+            value(data.daily, "account_guard_status", ""),
+        )
+    )
     print(f"phone_verification_detected={value(data.daily, 'phone_verification_detected')}")
     print(f"post_phone_verification_detected={value(data.post_phone, 'phone_verification_detected', 'not_checked')}")
     print(f"safe_shortlist_count={value(data.daily, 'safe_shortlist_count')}")
