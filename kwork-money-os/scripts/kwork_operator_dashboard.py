@@ -41,6 +41,8 @@ POST_PHONE_REPORT = REPORTS / "post_phone_readiness_report.md"
 ACCOUNT_SWITCH_REPORT = REPORTS / "account_switch_report.md"
 LOGIN_DIAGNOSTICS_REPORT = REPORTS / "kwork_login_diagnostics_report.md"
 WINDOWS_CDP_REPORT = REPORTS / "windows_visible_browser_cdp_report.md"
+PROFILE_FILL_CDP_REPORT = REPORTS / "profile_fill_cdp_report.md"
+KWORK_FILL_CDP_REPORT = REPORTS / "kwork_fill_cdp_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -68,6 +70,8 @@ class DashboardData:
     account_switch: dict[str, str]
     login_diagnostics: dict[str, str]
     windows_cdp: dict[str, str]
+    profile_fill_cdp: dict[str, str]
+    kwork_fill_cdp: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -269,6 +273,8 @@ def collect_data() -> DashboardData:
     account_switch_text = read_optional(ACCOUNT_SWITCH_REPORT)
     login_diagnostics_text = read_optional(LOGIN_DIAGNOSTICS_REPORT)
     windows_cdp_text = read_optional(WINDOWS_CDP_REPORT)
+    profile_fill_cdp_text = read_optional(PROFILE_FILL_CDP_REPORT)
+    kwork_fill_cdp_text = read_optional(KWORK_FILL_CDP_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -285,6 +291,8 @@ def collect_data() -> DashboardData:
         account_switch=parse_fields(account_switch_text),
         login_diagnostics=parse_fields(login_diagnostics_text),
         windows_cdp=parse_fields(windows_cdp_text),
+        profile_fill_cdp=parse_fields(profile_fill_cdp_text),
+        kwork_fill_cdp=parse_fields(kwork_fill_cdp_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -388,6 +396,8 @@ def build_markdown(data: DashboardData) -> str:
         f"- windows_cdp_persistence_confirmed: `{value(data.windows_cdp, 'persistence_confirmed', 'not_checked')}`",
         f"- post_phone_browser_mode: `{value(data.post_phone, 'browser_mode', 'not_checked')}`",
         f"- post_phone_cdp_connected: `{value(data.post_phone, 'cdp_connected', 'not_checked')}`",
+        f"- profile_fill_cdp_status: `{value(data.profile_fill_cdp, 'account_guard_status', 'not_checked')}`",
+        f"- kwork_fill_cdp_status: `{value(data.kwork_fill_cdp, 'account_guard_status', 'not_checked')}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
         f"- leads_found: `{value(data.daily, 'leads_found')}`",
@@ -473,6 +483,24 @@ def build_markdown(data: DashboardData) -> str:
         f"- can_continue_profile_setup: `{value(data.post_phone, 'can_continue_profile_setup', 'not_checked')}`",
         f"- can_continue_kwork_draft: `{value(data.post_phone, 'can_continue_kwork_draft', 'not_checked')}`",
         "- mode: read-only preview; no save/publish/send/final buttons are clicked.",
+        "",
+        "## CDP Fill Without Final Buttons",
+        f"- profile_report: `{PROFILE_FILL_CDP_REPORT.relative_to(ROOT)}`",
+        f"- profile_browser_mode: `{value(data.profile_fill_cdp, 'browser_mode', 'not_checked')}`",
+        f"- profile_detected_username: `{value(data.profile_fill_cdp, 'detected_username', 'not_checked')}`",
+        f"- profile_account_guard_status: `{value(data.profile_fill_cdp, 'account_guard_status', 'not_checked')}`",
+        f"- profile_fields_filled: `{value(data.profile_fill_cdp, 'fields_filled', 'not_checked')}`",
+        f"- profile_final_buttons_blocked: `{value(data.profile_fill_cdp, 'final_buttons_blocked', 'not_checked')}`",
+        f"- profile_next_manual_action: `{value(data.profile_fill_cdp, 'user_next_step', 'not_checked')}`",
+        f"- kwork_report: `{KWORK_FILL_CDP_REPORT.relative_to(ROOT)}`",
+        f"- kwork_browser_mode: `{value(data.kwork_fill_cdp, 'browser_mode', 'not_checked')}`",
+        f"- kwork_detected_username: `{value(data.kwork_fill_cdp, 'detected_username', 'not_checked')}`",
+        f"- kwork_account_guard_status: `{value(data.kwork_fill_cdp, 'account_guard_status', 'not_checked')}`",
+        f"- kwork_title: `{value(data.kwork_fill_cdp, 'kwork_title', 'not_checked')}`",
+        f"- kwork_fields_filled: `{value(data.kwork_fill_cdp, 'fields_filled', 'not_checked')}`",
+        f"- kwork_final_buttons_blocked: `{value(data.kwork_fill_cdp, 'final_buttons_blocked', 'not_checked')}`",
+        f"- kwork_next_manual_action: `{value(data.kwork_fill_cdp, 'user_next_step', 'not_checked')}`",
+        "- safety: CDP fill may populate safe fields, but never clicks save, publish, moderation, send, proposal, phone, withdrawal, delete, or confirmation buttons.",
         "",
         "## Best Lead",
         f"- title: {best_title}",

@@ -490,6 +490,52 @@ reports/operator_dashboard.html
 
 Even in Windows CDP mode, final actions remain manual-only: profile save, publish, moderation, proposal/message send, order actions, withdrawal, phone/SMS, delete, and confirmations.
 
+## CDP Fill Without Final Buttons
+
+After Windows CDP login is confirmed, the setup flows can fill safe fields in the dedicated Windows Chrome/Edge profile and then stop for manual review:
+
+```bash
+npm run money:profile-fill-cdp
+npm run money:kwork-fill-cdp
+```
+
+`money:profile-fill-cdp` opens Kwork profile settings through Windows CDP, reads local `data/profile/profile_optimized.json`, fills safe profile text fields when Account Guard is `ok`, and stops before saving. It writes:
+
+```text
+reports/profile_fill_cdp_report.md
+```
+
+`money:kwork-fill-cdp` opens the new kwork form through Windows CDP, prepares the first Telegram bot offer from local public-safe offer data, fills safe title/description/package/FAQ/question/tag fields when selectors are available, and stops before save/moderation/publication. It writes:
+
+```text
+reports/kwork_fill_cdp_report.md
+```
+
+If Windows Chrome was closed, the CDP tools reopen the dedicated profile automatically:
+
+```text
+%LOCALAPPDATA%\KworkMoneyOS\ChromeProfiles\ZerroOne
+```
+
+Before any fill, scripts must confirm:
+
+```text
+cdp_connected: true
+detected_username: ZerroOne
+account_guard_status: ok
+persistence_confirmed: true
+```
+
+The hard final-button blocker records visible final buttons but does not click them:
+
+```text
+Сохранить профиль, Сохранить, Опубликовать, На модерацию, Отправить,
+Предложить услугу, Принять заказ, Подтвердить, Удалить,
+Настроить вывод, Привязать телефон
+```
+
+Manual next step after fill: review the page visually in the dedicated Windows Chrome window. Only the user may decide to save the profile, save the kwork draft, or submit moderation. The scripts still do not enter passwords, SMS, phone data, withdrawal details, messages, proposals, or final confirmations.
+
 ## Kwork Account Optimizer + Reply Assistant
 
 All browser scripts support the same safe modes:

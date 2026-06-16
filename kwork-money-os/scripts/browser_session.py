@@ -59,11 +59,13 @@ class KworkBrowserSession:
         account: str = EXPECTED_ACCOUNT,
         start_url: str = MANAGE_KWORKS_URL,
         title: str = "Kwork Browser Session",
+        keep_open: bool = False,
     ) -> None:
         self.mode = mode
         self.account = account
         self.start_url = start_url
         self.title = title
+        self.keep_open = keep_open
         self.diagnostics = BrowserSessionDiagnostics(browser_mode=mode, account=account)
         self.bridge: KworkRpaBridge | None = None
         self.bridge_context: Any = None
@@ -108,7 +110,7 @@ class KworkBrowserSession:
 
     def __exit__(self, exc_type, exc, tb) -> None:
         if self.mode == "windows_cdp":
-            if self._created_page and self.page:
+            if self._created_page and self.page and not self.keep_open:
                 try:
                     self.page.close()
                 except Exception:
@@ -196,7 +198,10 @@ class KworkBrowserSession:
             "Принять заказ",
             "Отменить заказ",
             "Подтвердить действие",
+            "Подтвердить",
             "Удалить",
+            "Настроить вывод",
+            "Привязать телефон",
         ]
         try:
             return self.page.evaluate(
@@ -218,8 +223,13 @@ class KworkBrowserSession:
             return []
 
 
-def open_kwork_browser_session(mode: str = "windows_cdp", account: str = EXPECTED_ACCOUNT, start_url: str = MANAGE_KWORKS_URL):
+def open_kwork_browser_session(
+    mode: str = "windows_cdp",
+    account: str = EXPECTED_ACCOUNT,
+    start_url: str = MANAGE_KWORKS_URL,
+    keep_open: bool = False,
+):
     """Factory kept small for flow scripts that should not know backend details."""
     config = load_account_guard_config()
     target_account = account or config.expected_username
-    return KworkBrowserSession(mode=mode, account=target_account, start_url=start_url)
+    return KworkBrowserSession(mode=mode, account=target_account, start_url=start_url, keep_open=keep_open)
