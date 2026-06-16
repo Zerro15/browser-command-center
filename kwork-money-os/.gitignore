@@ -31,4 +31,5 @@ reports/browser_fill_report.md
 node_modules/
 .env
 .env.*
+!templates/yandex_direct_sheets_exporter/.env.example
 .DS_Store

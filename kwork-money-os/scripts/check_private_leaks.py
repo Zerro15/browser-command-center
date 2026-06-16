@@ -15,6 +15,7 @@ ALLOWLIST = {
     "kwork-money-os/reports/reply_drafts.example.md",
     "kwork-money-os/data/profile/profile_optimized.example.json",
     "kwork-money-os/data/offers/optimized/example_offer.json",
+    "kwork-money-os/templates/yandex_direct_sheets_exporter/.env.example",
 }
 
 
