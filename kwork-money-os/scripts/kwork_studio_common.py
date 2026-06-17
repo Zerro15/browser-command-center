@@ -31,6 +31,14 @@ DOM_SNAPSHOT = STUDIO_DIR / "last_kwork_form_dom_snapshot.json"
 MANUAL_FILL_PACK = STUDIO_DIR / "manual_fill_pack.md"
 QUICK_PUBLISH_CHECKLIST = REPORTS / "kwork_quick_publish_checklist.md"
 QUICK_PROPOSALS_REPORT = REPORTS / "quick_proposals_today.md"
+BEST_COVER_PROMPT_MD = STUDIO_DIR / "best_cover_prompt_for_chatgpt.md"
+BEST_COVER_PROMPT_JSON = STUDIO_DIR / "best_cover_prompt_for_chatgpt.json"
+BEST_COVER_PROMPT_REPORT = REPORTS / "best_cover_prompt_report.md"
+CATEGORY_RESOLVER_REPORT = REPORTS / "kwork_category_resolver_report.md"
+MY_KWORKS_AUDIT_JSON = STUDIO_DIR / "my_kworks_audit.json"
+MY_KWORKS_AUDIT_REPORT = REPORTS / "my_kworks_audit_report.md"
+LAUNCH_READINESS_REPORT = REPORTS / "kwork_launch_readiness_report.md"
+TODAY_ACTION_PACK_REPORT = REPORTS / "today_money_action_pack.md"
 
 
 FINAL_BUTTONS = [
