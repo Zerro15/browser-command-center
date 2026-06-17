@@ -48,11 +48,13 @@ def score_category(label: str) -> float:
 
 def score_subcategory(label: str) -> float:
     lower = label.lower()
+    if any(word in lower for word in ["политика", "персональных", "пд", "пользовательское", "обработка пд"]):
+        return 0.0
     best = 0.0
     for phrase, score in SUBCATEGORY_PRIORITIES:
         if phrase in lower:
             best = max(best, score)
-    if "бот" in lower:
+    if re.search(r"(^|[^а-яёa-z])(?:бот|боты|бота|чат-бот|чатбот)(?:[^а-яёa-z]|$)", lower, re.I):
         best = max(best, 0.9)
     if "api" in lower or "python" in lower:
         best = max(best, 0.65)

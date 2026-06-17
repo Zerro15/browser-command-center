@@ -12,6 +12,7 @@ from kwork_studio_common import (
     LAUNCH_READINESS_REPORT,
     MY_KWORKS_AUDIT_REPORT,
     QUICK_PROPOSALS_REPORT,
+    SUBCATEGORY_RESOLVER_REPORT,
     TODAY_ACTION_PACK_REPORT,
     ensure_studio_dirs,
     write_text,
@@ -60,6 +61,7 @@ def audit_summary(text: str) -> list[str]:
 def main() -> None:
     ensure_studio_dirs()
     category = read(CATEGORY_RESOLVER_REPORT)
+    subcategory = read(SUBCATEGORY_RESOLVER_REPORT)
     readiness = read(LAUNCH_READINESS_REPORT)
     audit = read(MY_KWORKS_AUDIT_REPORT)
     quick = read(QUICK_PROPOSALS_REPORT)
@@ -68,11 +70,23 @@ def main() -> None:
         "",
         f"- generated_at: `{datetime.now().isoformat(timespec='seconds')}`",
         "",
+        "## СЕГОДНЯ, ЧТО ДЕЛАТЬ",
+        "1. Если subcategory resolver выбрал подкатегорию — проверь её глазами.",
+        "2. Если не выбрал — руками выбери ближайшее: Боты / Чат-боты / Telegram-боты / Скрипты / Автоматизация.",
+        "3. Сгенерируй обложку по prompt из best_cover_prompt_for_chatgpt.md.",
+        "4. Сохрани картинку в covers/inbox.",
+        "5. Запусти cover-inbox-check -> cover-select -> cover-process-selected -> cover-upload-cdp.",
+        "6. Проверь кворк глазами.",
+        "7. Только сам вручную нажимай сохранение/модерацию.",
+        "8. Потом вручную отправь 2-3 отклика из quick_proposals_today.md.",
+        "",
         "## 1. Auto Category Result",
         f"- status: `{field(category, 'status')}`",
         f"- selected_category: `{field(category, 'selected_category', 'none')}`",
-        f"- selected_subcategory: `{field(category, 'selected_subcategory', 'none')}`",
+        f"- selected_subcategory: `{field(subcategory, 'selected_subcategory', field(category, 'selected_subcategory', 'none'))}`",
         f"- confidence_score: `{field(category, 'confidence_score', '0')}`",
+        f"- subcategory_verdict: `{field(subcategory, 'verdict', 'not_run')}`",
+        f"- subcategory_next_step: `{field(subcategory, 'user_next_step', 'run npm run money:kwork-resolve-subcategory-cdp')}`",
         "",
         "## 2. Best Cover Prompt",
         f"- prompt_path: `{BEST_COVER_PROMPT_MD}`",
@@ -81,6 +95,7 @@ def main() -> None:
         "",
         "## 3. My Kworks Audit Summary",
         *(f"- {item}" for item in (audit_summary(audit) or ["audit not available yet"])),
+        f"- best_title_candidate: `{field(audit, 'best_title_candidate', 'not available')}`",
         "",
         "## 4. Launch Readiness",
         f"- verdict: `{field(readiness, 'verdict')}`",

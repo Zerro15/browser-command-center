@@ -19,6 +19,38 @@ from kwork_studio_common import (
 from windows_visible_browser_cdp import EXPECTED_ACCOUNT, MANAGE_KWORKS_URL, run_check_zerroone
 
 
+TITLE_CANDIDATES = [
+    "Сделаю Telegram-бота для заявок с Google Таблицей",
+    "Настрою Telegram-бота для заявок и таблицу",
+    "Сделаю бота для заявок с таблицей и запуском",
+    "Telegram-бот для бизнеса: заявки в Google Таблицу",
+    "Сделаю Telegram-бота с деплоем и инструкцией",
+]
+
+
+def score_title_candidate(title: str) -> dict[str, Any]:
+    lower = title.lower()
+    clarity = 95 if "заяв" in lower and ("таблиц" in lower or "google" in lower) else 72
+    demand = 90 if "telegram" in lower and "бот" in lower else 75
+    devops_trust = 88 if ("депло" in lower or "инструкц" in lower or "запуск" in lower) else 68
+    not_too_complex = 92 if len(title) <= 62 else 78
+    kwork_style = 90 if title.startswith(("Сделаю", "Настрою")) else 82
+    total = round((clarity * 0.28) + (demand * 0.25) + (devops_trust * 0.17) + (not_too_complex * 0.15) + (kwork_style * 0.15))
+    return {
+        "title": title,
+        "clarity": clarity,
+        "demand": demand,
+        "devops_trust": devops_trust,
+        "not_too_complex": not_too_complex,
+        "kwork_style": kwork_style,
+        "total": total,
+    }
+
+
+def title_candidates() -> list[dict[str, Any]]:
+    return sorted((score_title_candidate(title) for title in TITLE_CANDIDATES), key=lambda item: (-item["total"], item["title"]))
+
+
 def collect_visible_kworks(page) -> list[dict[str, Any]]:
     return page.evaluate(
         """() => {
@@ -117,6 +149,8 @@ def score_item(item: dict[str, Any]) -> dict[str, Any]:
         "verdict": verdict,
         "missing_fields": missing,
         "recommendations": recommendations or ["Оставить как есть и проверить глазами перед трафиком."],
+        "title_candidates": title_candidates(),
+        "best_title_candidate": title_candidates()[0]["title"],
     }
 
 
@@ -213,9 +247,16 @@ def write_outputs(result: dict[str, Any]) -> None:
                 f"- competition_risk: `{item['competition_risk']}`",
                 f"- verdict: `{item['verdict']}`",
                 f"- missing_fields: `{', '.join(item['missing_fields']) or 'none'}`",
+                f"- best_title_candidate: `{item.get('best_title_candidate', '')}`",
                 "",
                 "### Recommendations",
                 *(f"- {line}" for line in item["recommendations"]),
+                "",
+                "### Title Candidates",
+                *(
+                    f"- {candidate['title']} | total={candidate['total']} clarity={candidate['clarity']} demand={candidate['demand']} devops_trust={candidate['devops_trust']} not_too_complex={candidate['not_too_complex']} kwork_style={candidate['kwork_style']}"
+                    for candidate in item.get("title_candidates", [])
+                ),
                 "",
             ]
         )

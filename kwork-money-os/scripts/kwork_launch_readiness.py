@@ -12,6 +12,7 @@ from kwork_studio_common import (
     FULL_FILL_REPORT,
     LAUNCH_READINESS_REPORT,
     MY_KWORKS_AUDIT_REPORT,
+    SUBCATEGORY_RESOLVER_REPORT,
     ensure_studio_dirs,
     write_text,
 )
@@ -35,11 +36,14 @@ def main() -> None:
     check = run_check_zerroone(restart_check=True)
     fill = read(FULL_FILL_REPORT)
     category = read(CATEGORY_RESOLVER_REPORT)
+    subcategory_report = read(SUBCATEGORY_RESOLVER_REPORT)
     cover = read(COVER_UPLOAD_REPORT)
     audit = read(MY_KWORKS_AUDIT_REPORT)
     selected_category = field(category, "selected_category", "none")
-    selected_subcategory = field(category, "selected_subcategory", "none")
-    category_ok = selected_category not in {"none", "unknown", ""} and selected_subcategory not in {"none", "unknown", ""}
+    selected_subcategory = field(subcategory_report, "selected_subcategory", field(category, "selected_subcategory", "none"))
+    category_selected = selected_category not in {"none", "unknown", ""}
+    subcategory_selected = selected_subcategory not in {"none", "unknown", ""}
+    category_ok = category_selected and subcategory_selected
     cover_present = "cover_uploaded: `true`" in fill or "cover_uploaded: `true`" in cover
     title_present = "title" in field(fill, "fields_filled", "")
     description_present = "description" in field(fill, "fields_filled", "")
@@ -54,6 +58,10 @@ def main() -> None:
 
     if not guard_ok:
         verdict = "DO_NOT_SUBMIT"
+    elif category_selected and not subcategory_selected and all(
+        [cover_present, title_present, description_present, price_days_present, buyer_questions_present, forbidden_absent]
+    ):
+        verdict = "NEEDS_SUBCATEGORY_ONLY"
     elif not category_ok:
         verdict = "NEEDS_CATEGORY"
     elif not cover_present:
@@ -71,6 +79,8 @@ def main() -> None:
         f"- persistence_confirmed: `{str(bool(guard_ok)).lower()}`",
         f"- detected_username: `{detected_username}`",
         f"- category_selected: `{str(category_ok).lower()}`",
+        f"- parent_category_selected: `{str(category_selected).lower()}`",
+        f"- subcategory_selected: `{str(subcategory_selected).lower()}`",
         f"- selected_category: `{selected_category}`",
         f"- selected_subcategory: `{selected_subcategory}`",
         f"- cover_present: `{str(cover_present).lower()}`",
@@ -82,6 +92,10 @@ def main() -> None:
         f"- final_buttons_not_clicked: `{str(final_buttons_not_clicked).lower()}`",
         f"- verdict: `{verdict}`",
         f"- user_next_step: `Открой Chrome, проверь кворк глазами. Сохранение/модерация только вручную.`",
+        "",
+        "## Remaining Blocker",
+        "- Остался один ручной/автоматический блокер: subcategory." if verdict == "NEEDS_SUBCATEGORY_ONLY" else "- См. verdict и поля выше.",
+        "- Если subcategory выбрана, кворк готов к ручной проверке перед сохранением/модерацией.",
         "",
         "## Safety",
         "- Readiness is report-only.",

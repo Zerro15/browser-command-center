@@ -107,6 +107,7 @@ Cover workflow остаётся human-in-the-loop:
 ```bash
 cd /home/zerro/projects/browser-command-center/kwork-money-os
 npm run money:kwork-auto-category-cdp
+npm run money:kwork-resolve-subcategory-cdp
 npm run money:best-cover-prompt
 npm run money:my-kworks-audit-cdp
 npm run money:kwork-launch-readiness-cdp
@@ -114,6 +115,7 @@ npm run money:today-action-pack
 ```
 
 - `money:kwork-auto-category-cdp` выбирает только category/subcategory, если уверенность достаточная.
+- `money:kwork-resolve-subcategory-cdp` отдельно раскрывает subcategory UI, пробует поиск `бот`, `Telegram`, `чат`, `скрипт`, `автоматизация` и выбирает только уверенный вариант.
 - `money:best-cover-prompt` пишет один лучший prompt для ChatGPT image generation в `data/kwork_studio/best_cover_prompt_for_chatgpt.md`.
 - `money:my-kworks-audit-cdp` read-only анализирует видимые кворки аккаунта и даёт рекомендации по title, cover, trust, DevOps и ясности для покупателя.
 - `money:kwork-launch-readiness-cdp` проверяет, готов ли текущий кворк к ручному review.

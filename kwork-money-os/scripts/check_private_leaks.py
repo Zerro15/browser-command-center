@@ -58,6 +58,7 @@ FORBIDDEN_RULES = [
     Rule("Playwright GUI diagnostics report", "kwork-money-os/reports/playwright_gui_diagnostics_report.md"),
     Rule("Windows visible browser CDP report", "kwork-money-os/reports/windows_visible_browser_cdp_report.md"),
     Rule("Kwork category resolver report", "kwork-money-os/reports/kwork_category_resolver_report.md"),
+    Rule("Kwork subcategory resolver report", "kwork-money-os/reports/kwork_subcategory_resolver_report.md"),
     Rule("best cover prompt report", "kwork-money-os/reports/best_cover_prompt_report.md"),
     Rule("my kworks audit report", "kwork-money-os/reports/my_kworks_audit_report.md"),
     Rule("Kwork launch readiness report", "kwork-money-os/reports/kwork_launch_readiness_report.md"),
