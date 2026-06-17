@@ -28,6 +28,9 @@ COVER_UPLOAD_REPORT = REPORTS / "kwork_cover_upload_report.md"
 FULL_FILL_REPORT = REPORTS / "kwork_full_fill_cdp_report.md"
 MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
 DOM_SNAPSHOT = STUDIO_DIR / "last_kwork_form_dom_snapshot.json"
+MANUAL_FILL_PACK = STUDIO_DIR / "manual_fill_pack.md"
+QUICK_PUBLISH_CHECKLIST = REPORTS / "kwork_quick_publish_checklist.md"
+QUICK_PROPOSALS_REPORT = REPORTS / "quick_proposals_today.md"
 
 
 FINAL_BUTTONS = [

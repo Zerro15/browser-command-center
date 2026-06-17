@@ -66,3 +66,36 @@ cd C:\Users\Bogdan\browser-bridge
 - `browser-flow` нужен как переход к режиму "ты даёшь текстовую инструкцию, локальный runner делает шаги по сайту".
 - `browser-prompt` нужен как первый слой перевода короткого запроса в browser-flow, чтобы и я, и ты могли работать через один и тот же мост командами из терминала.
 - `browser-kwork` нужен для типовых сценариев на Kwork без ручной сборки шагов каждый раз; другие сайты можно добавлять отдельными модулями рядом с ним.
+
+## Kwork MVP Money-Now Flow
+
+Когда цель не "идеальная система", а быстрый старт на Kwork, используй MVP-поток:
+
+```bash
+cd /home/zerro/projects/browser-command-center/kwork-money-os
+.venv/bin/python scripts/kwork_full_fill_cdp.py --background
+```
+
+Что делает этот режим:
+
+- заполняет текущий безопасный шаг формы кворка без `Сохранить`, `На модерацию`, `Опубликовать`, `Отправить`;
+- пишет step-aware report в `kwork-money-os/reports/kwork_full_fill_cdp_report.md`;
+- если Kwork не показывает пакеты/FAQ/теги на текущем шаге, это считается `fields_not_on_current_step`, а не ошибкой;
+- создаёт local-only copy-paste pack в `kwork-money-os/data/kwork_studio/manual_fill_pack.md`, чтобы быстро закончить руками, если поле не найдено;
+- создаёт local-only чеклист `kwork-money-os/reports/kwork_quick_publish_checklist.md`.
+
+Быстрые офлайн-отклики:
+
+```bash
+cd /home/zerro/projects/browser-command-center/kwork-money-os
+npm run money:quick-proposals
+```
+
+- Команда берёт уже сохранённые лиды и готовит 3-5 коротких откликов в `kwork-money-os/reports/quick_proposals_today.md`.
+- Ничего не отправляется автоматически.
+
+Cover workflow остаётся human-in-the-loop:
+
+- если inbox с картинками пустой, это не блокирует работу с текстами и пакетами;
+- статус cover можно добить позже вручную по prompt-файлу;
+- все final buttons и отправка откликов остаются manual-only.
