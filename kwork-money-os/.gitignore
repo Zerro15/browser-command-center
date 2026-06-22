@@ -7,6 +7,7 @@
 .auth/
 data/private/
 data/kwork_profile_audit/
+data/kwork_inventory/
 data/leads/
 data/delivery/best_lead_yandex_direct_sheets/
 data/replies/

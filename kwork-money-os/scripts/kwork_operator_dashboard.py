@@ -55,6 +55,7 @@ KWORK_FULL_FILL_CDP_REPORT = REPORTS / "kwork_full_fill_cdp_report.md"
 KWORK_MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
 KWORK_PROFILE_AUDIT_LIVE_REPORT = REPORTS / "kwork_profile_audit_live_report.md"
 KWORK_PROFILE_AUDIT_REPORT = REPORTS / "kwork_profile_audit_report.md"
+KWORK_INVENTORY_REPORT = REPORTS / "kwork_inventory_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -96,6 +97,7 @@ class DashboardData:
     marketing_qa: dict[str, str]
     profile_audit_live: dict[str, str]
     profile_audit: dict[str, str]
+    kwork_inventory: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -311,6 +313,7 @@ def collect_data() -> DashboardData:
     marketing_qa_text = read_optional(KWORK_MARKETING_QA_REPORT)
     profile_audit_live_text = read_optional(KWORK_PROFILE_AUDIT_LIVE_REPORT)
     profile_audit_text = read_optional(KWORK_PROFILE_AUDIT_REPORT)
+    kwork_inventory_text = read_optional(KWORK_INVENTORY_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -341,6 +344,7 @@ def collect_data() -> DashboardData:
         marketing_qa=parse_fields(marketing_qa_text),
         profile_audit_live=parse_fields(profile_audit_live_text),
         profile_audit=parse_fields(profile_audit_text),
+        kwork_inventory=parse_fields(kwork_inventory_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -458,6 +462,11 @@ def build_markdown(data: DashboardData) -> str:
         f"- profile_audit_live_status: `{value(data.profile_audit_live, 'data_collection_status', 'not_checked')}`",
         f"- profile_audit_live_kworks_count: `{value(data.profile_audit_live, 'kworks_collected', 'not_checked')}`",
         f"- profile_audit_latest_verdict: `{value(data.profile_audit, 'verdict', value(data.profile_audit_live, 'data_collection_status', 'not_checked'))}`",
+        f"- inventory_total_kworks: `{value(data.kwork_inventory, 'total_current', 'not_checked')}`",
+        f"- inventory_added: `{value(data.kwork_inventory, 'added', 'not_checked')}`",
+        f"- inventory_missing_now: `{value(data.kwork_inventory, 'missing_now', 'not_checked')}`",
+        f"- inventory_changed: `{value(data.kwork_inventory, 'changed', 'not_checked')}`",
+        f"- inventory_weakest_kwork: `{value(data.kwork_inventory, 'weakest_kwork', 'not_checked')}`",
         f"- foreground_policy: `{value(data.full_fill_cdp, 'foreground_policy', value(data.competitor_scan, 'foreground_policy', 'not_checked'))}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
@@ -606,6 +615,17 @@ def build_markdown(data: DashboardData) -> str:
         f"- kwork_state_changed: `{value(data.profile_audit_live, 'kwork_state_changed', 'not_checked')}`",
         f"- next_manual_action: `{first_real('review generated audit and edit Kwork manually only', value(data.profile_audit_live, 'stopped_reason', ''))}`",
         "- mode: live collector is read-only; offline audit prepares recommendations and replacement text.",
+        "",
+        "## Kwork Inventory",
+        f"- report: `{KWORK_INVENTORY_REPORT.relative_to(ROOT)}`",
+        f"- total_kworks: `{value(data.kwork_inventory, 'total_current', 'not_checked')}`",
+        f"- added: `{value(data.kwork_inventory, 'added', 'not_checked')}`",
+        f"- missing_now: `{value(data.kwork_inventory, 'missing_now', 'not_checked')}`",
+        f"- changed: `{value(data.kwork_inventory, 'changed', 'not_checked')}`",
+        f"- unchanged: `{value(data.kwork_inventory, 'unchanged', 'not_checked')}`",
+        f"- weakest_kwork: `{value(data.kwork_inventory, 'weakest_kwork', 'not_checked')}`",
+        f"- next_manual_action: `{value(data.kwork_inventory, 'next_manual_action', 'run money:kwork-inventory, then review report manually')}`",
+        "- mode: inventory is read-only and treats disappeared kworks as `missing_now`, not deleted.",
         "",
         "## Best Lead",
         f"- title: {best_title}",

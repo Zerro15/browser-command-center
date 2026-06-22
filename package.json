@@ -55,6 +55,7 @@
     "money:my-kworks-audit-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_my_kworks_audit.py",
     "money:kwork-profile-audit": "cd kwork-money-os && .venv/bin/python scripts/kwork_profile_audit.py",
     "money:kwork-profile-audit-live": "cd kwork-money-os && .venv/bin/python scripts/kwork_profile_audit_live.py",
+    "money:kwork-inventory": "cd kwork-money-os && .venv/bin/python scripts/kwork_inventory.py",
     "money:kwork-launch-readiness-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_launch_readiness.py",
     "money:today-action-pack": "cd kwork-money-os && .venv/bin/python scripts/kwork_today_action_pack.py",
     "money:lead-radar-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_cdp_preview.py --target lead-radar",
