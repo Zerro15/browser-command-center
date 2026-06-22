@@ -23,6 +23,33 @@ It does not:
 - change the live profile without approval.
 - click publish, moderation, send, delete, or profile-save buttons.
 
+## Kwork Operator Mission
+
+Kwork Money OS is a safe operator for developing the `ZerroOne` seller profile. Its job is to help the user earn on Kwork by improving existing kworks, finding weak spots, preparing better copy, suggesting new services, and producing clear reports for manual action.
+
+The operator should audit created kworks and evaluate:
+- title;
+- category and subcategory;
+- cover;
+- description;
+- price;
+- delivery time;
+- extras;
+- FAQ;
+- buyer questions.
+
+Every kwork quality report should answer:
+- what is already good;
+- what blocks sales;
+- what must be fixed before publication;
+- which exact texts to replace: title, description, buyer questions, FAQ;
+- which extras to add;
+- how to improve the cover;
+- which price and delivery time to use;
+- which new kworks should be created next.
+
+The operator must never publish kworks, send proposals, message clients, accept orders, change withdrawal settings, change phone/SMS settings, or click final buttons automatically. Any action that sends, saves, publishes, moderates, accepts, deletes, confirms, or changes live Kwork state is manual-only and must be performed by the user.
+
 ## Setup
 
 Run commands from:
