@@ -16,6 +16,8 @@ from kwork_studio_common import FINAL_BUTTONS, read_json, rel, write_text
 
 
 REPORT_PATH = REPORTS / "kwork_profile_audit_report.md"
+LIVE_SNAPSHOT_JSON = DATA / "kwork_profile_audit" / "live_kworks_snapshot.json"
+LIVE_REPORT = REPORTS / "kwork_profile_audit_live_report.md"
 LOCAL_MY_KWORKS_JSON = DATA / "kwork_studio" / "my_kworks_audit.json"
 LOCAL_MY_KWORKS_REPORT = REPORTS / "my_kworks_audit_report.md"
 MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
@@ -54,14 +56,22 @@ def score_local_item(item: dict[str, Any]) -> dict[str, Any]:
     has_trust = any(word in text for word in ["инструкц", "деплой", "docker", "linux", ".env", "провер"])
     has_risk = any(word in text for word in ["спам", "обход", "капч", "взлом", "накрут"])
 
-    score = 0
-    score += 18 if 25 <= len(title) <= 90 else 8
-    score += 16 if has_specific_result else 6
-    score += 16 if cover_present else 4
-    score += 12 if price_present else 4
-    score += 14 if has_trust else 6
-    score += 14 if not has_risk else 0
-    score += 10 if item.get("status") else 4
+    title_score = 90 if 25 <= len(title) <= 90 else 45
+    cover_score = 85 if cover_present else 25
+    description_score = 82 if has_specific_result else 45
+    price_score = 80 if price_present else 40
+    trust_score = 85 if has_trust else 50
+    safety_score = 90 if not has_risk else 10
+    status_score = 75 if item.get("status") else 40
+    score = round(
+        title_score * 0.18
+        + cover_score * 0.16
+        + description_score * 0.18
+        + price_score * 0.12
+        + trust_score * 0.16
+        + safety_score * 0.14
+        + status_score * 0.06
+    )
 
     blockers = []
     if not title:
@@ -81,6 +91,12 @@ def score_local_item(item: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "score": min(score, 100),
+        "title_score": title_score,
+        "cover_score": cover_score,
+        "description_score": description_score,
+        "price_score": price_score,
+        "trust_score": trust_score,
+        "devops_fit_score": trust_score,
         "verdict": verdict,
         "good": [
             "Есть конкретный buyer outcome." if has_specific_result else "Можно усилить конкретику результата.",
@@ -107,6 +123,10 @@ def score_local_item(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_local_items() -> list[dict[str, Any]]:
+    live_payload = read_json(LIVE_SNAPSHOT_JSON, {})
+    live_items = live_payload.get("kworks") if isinstance(live_payload, dict) else []
+    if live_items:
+        return [item for item in live_items if isinstance(item, dict)]
     payload = read_json(LOCAL_MY_KWORKS_JSON, {})
     items = payload.get("kworks") if isinstance(payload, dict) else []
     return [item for item in items if isinstance(item, dict)]
@@ -129,6 +149,9 @@ def build_report() -> str:
         "## Data Collection Status",
         "",
         f"- local_my_kworks_json: `{rel(LOCAL_MY_KWORKS_JSON)}`",
+        f"- live_snapshot_json: `{rel(LIVE_SNAPSHOT_JSON)}`",
+        f"- live_snapshot_exists: `{str(LIVE_SNAPSHOT_JSON.exists()).lower()}`",
+        f"- live_report_exists: `{str(LIVE_REPORT.exists()).lower()}`",
         f"- local_my_kworks_json_exists: `{str(LOCAL_MY_KWORKS_JSON.exists()).lower()}`",
         f"- local_my_kworks_report_exists: `{str(LOCAL_MY_KWORKS_REPORT.exists()).lower()}`",
         f"- local_items_loaded: `{len(local_items)}`",

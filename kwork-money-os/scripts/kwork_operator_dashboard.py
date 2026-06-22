@@ -53,6 +53,8 @@ KWORK_COVER_PROCESSED_REPORT = REPORTS / "kwork_cover_processed_report.md"
 KWORK_COVER_UPLOAD_REPORT = REPORTS / "kwork_cover_upload_report.md"
 KWORK_FULL_FILL_CDP_REPORT = REPORTS / "kwork_full_fill_cdp_report.md"
 KWORK_MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
+KWORK_PROFILE_AUDIT_LIVE_REPORT = REPORTS / "kwork_profile_audit_live_report.md"
+KWORK_PROFILE_AUDIT_REPORT = REPORTS / "kwork_profile_audit_report.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -92,6 +94,8 @@ class DashboardData:
     cover_upload: dict[str, str]
     full_fill_cdp: dict[str, str]
     marketing_qa: dict[str, str]
+    profile_audit_live: dict[str, str]
+    profile_audit: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -305,6 +309,8 @@ def collect_data() -> DashboardData:
     cover_upload_text = read_optional(KWORK_COVER_UPLOAD_REPORT)
     full_fill_cdp_text = read_optional(KWORK_FULL_FILL_CDP_REPORT)
     marketing_qa_text = read_optional(KWORK_MARKETING_QA_REPORT)
+    profile_audit_live_text = read_optional(KWORK_PROFILE_AUDIT_LIVE_REPORT)
+    profile_audit_text = read_optional(KWORK_PROFILE_AUDIT_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -333,6 +339,8 @@ def collect_data() -> DashboardData:
         cover_upload=parse_fields(cover_upload_text),
         full_fill_cdp=parse_fields(full_fill_cdp_text),
         marketing_qa=parse_fields(marketing_qa_text),
+        profile_audit_live=parse_fields(profile_audit_live_text),
+        profile_audit=parse_fields(profile_audit_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -447,6 +455,9 @@ def build_markdown(data: DashboardData) -> str:
         f"- kwork_full_fill_status: `{value(data.full_fill_cdp, 'fields_filled', 'not_checked')}`",
         f"- marketing_qa_score: `{value(data.marketing_qa, 'score', 'not_checked')}`",
         f"- marketing_qa_verdict: `{value(data.marketing_qa, 'verdict', 'not_checked')}`",
+        f"- profile_audit_live_status: `{value(data.profile_audit_live, 'data_collection_status', 'not_checked')}`",
+        f"- profile_audit_live_kworks_count: `{value(data.profile_audit_live, 'kworks_collected', 'not_checked')}`",
+        f"- profile_audit_latest_verdict: `{value(data.profile_audit, 'verdict', value(data.profile_audit_live, 'data_collection_status', 'not_checked'))}`",
         f"- foreground_policy: `{value(data.full_fill_cdp, 'foreground_policy', value(data.competitor_scan, 'foreground_policy', 'not_checked'))}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
@@ -583,6 +594,18 @@ def build_markdown(data: DashboardData) -> str:
         f"- foreground_policy: `{value(data.full_fill_cdp, 'foreground_policy', value(data.competitor_scan, 'foreground_policy', 'not_checked'))}`",
         f"- brought_to_front_count: `{value(data.full_fill_cdp, 'brought_to_front_count', value(data.competitor_scan, 'brought_to_front_count', 'not_checked'))}`",
         f"- next_manual_step: `{value(data.marketing_qa, 'next_manual_step', value(data.full_fill_cdp, 'user_next_step', 'not_checked'))}`",
+        "",
+        "## Kwork Profile Audit",
+        f"- live_report: `{KWORK_PROFILE_AUDIT_LIVE_REPORT.relative_to(ROOT)}`",
+        f"- offline_report: `{KWORK_PROFILE_AUDIT_REPORT.relative_to(ROOT)}`",
+        f"- live_status: `{value(data.profile_audit_live, 'data_collection_status', 'not_checked')}`",
+        f"- found_kworks_count: `{value(data.profile_audit_live, 'kworks_collected', 'not_checked')}`",
+        f"- latest_audit_verdict: `{value(data.profile_audit, 'verdict', value(data.profile_audit_live, 'data_collection_status', 'not_checked'))}`",
+        f"- account_guard_status: `{value(data.profile_audit_live, 'account_guard_status', 'not_checked')}`",
+        f"- final_buttons_clicked: `{value(data.profile_audit_live, 'final_buttons_clicked', 'not_checked')}`",
+        f"- kwork_state_changed: `{value(data.profile_audit_live, 'kwork_state_changed', 'not_checked')}`",
+        f"- next_manual_action: `{first_real('review generated audit and edit Kwork manually only', value(data.profile_audit_live, 'stopped_reason', ''))}`",
+        "- mode: live collector is read-only; offline audit prepares recommendations and replacement text.",
         "",
         "## Best Lead",
         f"- title: {best_title}",
