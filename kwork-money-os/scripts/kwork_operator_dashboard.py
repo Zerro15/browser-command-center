@@ -56,6 +56,7 @@ KWORK_MARKETING_QA_REPORT = REPORTS / "kwork_marketing_qa_report.md"
 KWORK_PROFILE_AUDIT_LIVE_REPORT = REPORTS / "kwork_profile_audit_live_report.md"
 KWORK_PROFILE_AUDIT_REPORT = REPORTS / "kwork_profile_audit_report.md"
 KWORK_INVENTORY_REPORT = REPORTS / "kwork_inventory_report.md"
+KWORK_ALL_LIST_REPORT = REPORTS / "kwork_all_kworks_list.md"
 PREPARED_ORDERS_DIR = DATA / "orders" / "prepared"
 OFFER_FACTORY_ORDER = [
     "telegram_leads_bot.json",
@@ -98,6 +99,7 @@ class DashboardData:
     profile_audit_live: dict[str, str]
     profile_audit: dict[str, str]
     kwork_inventory: dict[str, str]
+    kwork_all_list: dict[str, str]
     top5: list[str]
     proposal_text: str
     proposal_price: str
@@ -314,6 +316,7 @@ def collect_data() -> DashboardData:
     profile_audit_live_text = read_optional(KWORK_PROFILE_AUDIT_LIVE_REPORT)
     profile_audit_text = read_optional(KWORK_PROFILE_AUDIT_REPORT)
     kwork_inventory_text = read_optional(KWORK_INVENTORY_REPORT)
+    kwork_all_list_text = read_optional(KWORK_ALL_LIST_REPORT)
     top5_text = read_text(TOP5_REPORT)
     proposal_text_raw = read_text(BEST_PROPOSAL)
     template_readme = read_text(TEMPLATE_README)
@@ -345,6 +348,7 @@ def collect_data() -> DashboardData:
         profile_audit_live=parse_fields(profile_audit_live_text),
         profile_audit=parse_fields(profile_audit_text),
         kwork_inventory=parse_fields(kwork_inventory_text),
+        kwork_all_list=parse_fields(kwork_all_list_text),
         top5=parse_top5(top5_text),
         proposal_text=proposal,
         proposal_price=price,
@@ -467,6 +471,8 @@ def build_markdown(data: DashboardData) -> str:
         f"- inventory_missing_now: `{value(data.kwork_inventory, 'missing_now', 'not_checked')}`",
         f"- inventory_changed: `{value(data.kwork_inventory, 'changed', 'not_checked')}`",
         f"- inventory_weakest_kwork: `{value(data.kwork_inventory, 'weakest_kwork', 'not_checked')}`",
+        f"- all_kworks_collection_status: `{value(data.kwork_all_list, 'collection_status', 'not_checked')}`",
+        f"- all_kworks_collected_unique: `{value(data.kwork_all_list, 'collected_unique', 'not_checked')}`",
         f"- foreground_policy: `{value(data.full_fill_cdp, 'foreground_policy', value(data.competitor_scan, 'foreground_policy', 'not_checked'))}`",
         f"- phone_verification_detected: `{value(data.daily, 'phone_verification_detected')}`",
         f"- post_phone_verification_detected: `{value(data.post_phone, 'phone_verification_detected', 'not_checked')}`",
@@ -626,6 +632,15 @@ def build_markdown(data: DashboardData) -> str:
         f"- weakest_kwork: `{value(data.kwork_inventory, 'weakest_kwork', 'not_checked')}`",
         f"- next_manual_action: `{value(data.kwork_inventory, 'next_manual_action', 'run money:kwork-inventory, then review report manually')}`",
         "- mode: inventory is read-only and treats disappeared kworks as `missing_now`, not deleted.",
+        "",
+        "## Kwork List All",
+        f"- report: `{KWORK_ALL_LIST_REPORT.relative_to(ROOT)}`",
+        f"- collected_unique: `{value(data.kwork_all_list, 'collected_unique', 'not_checked')}`",
+        f"- active_ui_count: `{value(data.kwork_all_list, 'active_ui_count', 'not_checked')}`",
+        f"- drafts_ui_count: `{value(data.kwork_all_list, 'drafts_ui_count', 'not_checked')}`",
+        f"- all_ui_count: `{value(data.kwork_all_list, 'all_ui_count', 'not_checked')}`",
+        f"- collection_status: `{value(data.kwork_all_list, 'collection_status', 'not_checked')}`",
+        "- mode: simple read-only export of visible Kwork list tabs.",
         "",
         "## Best Lead",
         f"- title: {best_title}",
