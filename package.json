@@ -49,6 +49,8 @@
     "money:kwork-full-fill-cdp-bg": "cd kwork-money-os && .venv/bin/python scripts/kwork_full_fill_cdp.py --background",
     "money:kwork-marketing-qa": "cd kwork-money-os && .venv/bin/python scripts/kwork_marketing_qa.py",
     "money:quick-proposals": "cd kwork-money-os && .venv/bin/python scripts/kwork_quick_proposals.py",
+    "money:reputation-recovery": "cd kwork-money-os && .venv/bin/python scripts/kwork_reputation_recovery.py",
+    "money:safe-order-filter": "cd kwork-money-os && .venv/bin/python scripts/kwork_reputation_recovery.py --mode filter",
     "money:kwork-auto-category-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_category_resolver.py",
     "money:kwork-resolve-subcategory-cdp": "cd kwork-money-os && .venv/bin/python scripts/kwork_subcategory_resolver.py",
     "money:best-cover-prompt": "cd kwork-money-os && .venv/bin/python scripts/kwork_best_cover_prompt.py",
